@@ -72,6 +72,8 @@ import {
   LabelList
 } from 'recharts';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 // --- TRANSLATIONS ---
 const translations = {
   vi: { dashboard: 'Bảng điều khiển', customers: 'Khách hàng', deals: 'Công trình', products: 'Sản phẩm', orders: 'Lịch sử Đơn hàng', warranties: 'Bảo hành', schedule: 'Lịch trình', settings: 'Cài đặt', logout: 'Đăng xuất', welcome: 'Chào buổi chiều', revenue: 'Doanh thu', new_cust: 'Khách hàng mới', open_deals: 'Công trình hoạt động', recent: 'Gần đây', priority: 'Ưu tiên', status: 'Trạng thái', add_new: 'Thêm mới', save: 'Lưu', cancel: 'Hủy' },
@@ -1206,7 +1208,7 @@ function App() {
 
   const apiFetch = async (url, options = {}) => {
     const headers = { 'Content-Type': 'application/json', ...(user ? { 'Authorization': `Bearer ${user.token}` } : {}), ...options.headers };
-    const res = await fetch(`http://localhost:5000${url}`, { ...options, headers });
+    const res = await fetch(`${API_BASE_URL}${url}`, { ...options, headers });
     if (!res.ok) throw new Error('API Error');
     return res.json();
   };
@@ -1253,7 +1255,7 @@ function App() {
   useEffect(() => {
     const checkHealth = async () => {
       try {
-        const res = await fetch('http://localhost:5000/api/health');
+        const res = await fetch(`${API_BASE_URL}/api/health`);
         if (res.ok) {
           const data = await res.json();
           setSysStatus({ online: true, db: data.db, port: data.port });
@@ -1376,7 +1378,7 @@ function App() {
 
   const handleBackup = () => { const data = { customers, deals, products, orders, timestamp: new Date() }; const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = `crm_backup_${new Date().toLocaleDateString()}.json`; link.click(); };
 
-  if (!user) return <div style={{height:'100vh',display:'flex',alignItems:'center',justifyContent:'center',background:'var(--bg-color)'}}><div style={{width:350,padding:'3rem',background:'var(--surface-color)',borderRadius:32,border:'1px solid var(--border-color)'}}><h2 style={{textAlign:'center',marginBottom:20}}>Cửa Tự Động Boss</h2><form onSubmit={async e=>{e.preventDefault(); const fd=new FormData(e.target); const res=await fetch('http://localhost:5000/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.fromEntries(fd))}); const data=await res.json(); if(res.ok){ const fullUser = {...data.user, token: data.token}; setUser(fullUser); localStorage.setItem('crm_user',JSON.stringify(fullUser));}}} style={{display:'flex',flexDirection:'column',gap:15}}><input name="email" defaultValue="admin@bossdoor.vn" style={{padding:15,borderRadius:12,background:'rgba(255,255,255,0.05)',border:'1px solid var(--border-color)',color:'white'}}/><input name="password" type="password" defaultValue="admin123" style={{padding:15,borderRadius:12,background:'rgba(255,255,255,0.05)',border:'1px solid var(--border-color)',color:'white'}}/><button type="submit" className="btn-primary" style={{padding:15}}>Login</button></form></div></div>;
+  if (!user) return <div style={{height:'100vh',display:'flex',alignItems:'center',justifyContent:'center',background:'var(--bg-color)'}}><div style={{width:350,padding:'3rem',background:'var(--surface-color)',borderRadius:32,border:'1px solid var(--border-color)'}}><h2 style={{textAlign:'center',marginBottom:20}}>Cửa Tự Động Boss</h2><form onSubmit={async e=>{e.preventDefault(); const fd=new FormData(e.target); const res=await fetch(`${API_BASE_URL}/api/auth/login`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.fromEntries(fd))}); const data=await res.json(); if(res.ok){ const fullUser = {...data.user, token: data.token}; setUser(fullUser); localStorage.setItem('crm_user',JSON.stringify(fullUser));}}} style={{display:'flex',flexDirection:'column',gap:15}}><input name="email" defaultValue="admin@bossdoor.vn" style={{padding:15,borderRadius:12,background:'rgba(255,255,255,0.05)',border:'1px solid var(--border-color)',color:'white'}}/><input name="password" type="password" defaultValue="admin123" style={{padding:15,borderRadius:12,background:'rgba(255,255,255,0.05)',border:'1px solid var(--border-color)',color:'white'}}/><button type="submit" className="btn-primary" style={{padding:15}}>Login</button></form></div></div>;
 
   return (
     <div className="app-container">
@@ -1735,7 +1737,7 @@ const CampaignExecutionModal = ({ campaign, customers, onComplete, onClose }) =>
 
     log('--- Đang lưu kết quả chiến dịch lên database... ---');
     try {
-      const res = await fetch(`http://localhost:5000/api/tasks/${campaign._id}/execute`, {
+      const res = await fetch(`${API_BASE_URL}/api/tasks/${campaign._id}/execute`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
