@@ -542,7 +542,7 @@ const Orders = ({ orders, onViewInvoice, onDeleteOrder, onUpdateOrderStatus, onC
                 <td>
                   <div style={{display:'flex', gap:'8px', flexWrap:'wrap'}}>
                     <button onClick={()=>onViewInvoice(o)} style={{background:'rgba(16,185,129,0.2)',border:'none',color:'#10b981',padding:'4px 8px',borderRadius:6,cursor:'pointer'}}>Xem hóa đơn</button>
-                    {(user?.role === 'admin' || user?.role === 'accountant') && debt > 0 && (
+                    {debt > 0 && (
                       <button onClick={()=>onCollectPayment(o)} style={{background:'rgba(99,102,241,0.2)',border:'none',color:'#a5b4fc',padding:'4px 8px',borderRadius:6,cursor:'pointer'}}>Thu tiền</button>
                     )}
                     {(user?.role === 'admin' || user?.role === 'accountant') && (

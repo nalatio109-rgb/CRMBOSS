@@ -405,9 +405,6 @@ app.delete('/api/orders/:id', auth, async (req, res) => {
 });
 
 app.put('/api/orders/:id', auth, async (req, res) => {
-  if (req.user && req.user.role !== 'admin' && req.user.role !== 'accountant') {
-    return res.status(403).json({ message: 'Access denied: Only Boss and Accountant can update orders' });
-  }
   try {
     const { status, paidAmount } = req.body;
     const updateData = {};
