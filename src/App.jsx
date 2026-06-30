@@ -683,12 +683,57 @@ const Orders = ({ orders, onViewInvoice, onDeleteOrder, onUpdateOrderStatus, onC
   </div>
 );
 
-const Warranties = ({ warranties, onAddWarranty, onViewWarranty }) => (
-  <div className="animate-in">
-    <header><h1>Quản lý Bảo hành</h1><button className="btn-primary" onClick={onAddWarranty}>Thêm Phiếu</button></header>
-    <div className="section-card"><table className="data-table"><thead><tr><th>Khách hàng</th><th>Sản phẩm</th><th>Ngày Hết hạn</th><th>Trạng thái</th></tr></thead><tbody>{warranties.map(w=>(<tr key={w._id} onClick={()=>onViewWarranty(w)} style={{cursor:'pointer'}}><td>{w.customerId?.name || 'N/A'}</td><td>{w.productName}</td><td>{new Date(w.endDate).toLocaleDateString()}</td><td><span className={`priority-badge priority-${w.status==='Active'?'normal':'high'}`}>{w.status}</span></td></tr>))}</tbody></table></div>
-  </div>
-);
+const Warranties = ({ warranties, onAddWarranty, onViewWarranty }) => {
+  const getDurationText = (startStr, endStr) => {
+    const start = new Date(startStr || Date.now());
+    const end = new Date(endStr);
+    const diffYears = end.getFullYear() - start.getFullYear();
+    if (diffYears > 0) return `${diffYears} năm`;
+    
+    const diffTime = Math.abs(end - start);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    if (diffDays >= 300) {
+      return '1 năm';
+    } else if (diffDays >= 30) {
+      return `${Math.round(diffDays / 30)} tháng`;
+    }
+    return `${diffDays} ngày`;
+  };
+
+  return (
+    <div className="animate-in">
+      <header><h1>Quản lý Bảo hành</h1><button className="btn-primary" onClick={onAddWarranty}>Thêm Phiếu</button></header>
+      <div className="section-card">
+        <table className="data-table">
+          <thead>
+            <tr>
+              <th>Khách hàng</th>
+              <th>Sản phẩm</th>
+              <th>Ngày Hết hạn</th>
+              <th>Trạng thái</th>
+            </tr>
+          </thead>
+          <tbody>
+            {warranties.map(w => {
+              const duration = getDurationText(w.startDate, w.endDate);
+              return (
+                <tr key={w._id} onClick={()=>onViewWarranty(w)} style={{cursor:'pointer'}}>
+                  <td>{w.customerId?.name || 'N/A'}</td>
+                  <td>{w.productName}</td>
+                  <td>
+                    {new Date(w.endDate).toLocaleDateString('vi-VN')}
+                    <span style={{ fontSize: '0.8rem', color: '#94a3b8', marginLeft: '6px' }}>({duration})</span>
+                  </td>
+                  <td><span className={`priority-badge priority-${w.status==='Active'?'normal':'high'}`}>{w.status}</span></td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
 
 const Schedule = ({ tasks, customers, onAddTask, onToggleTask, onDeleteTask, onExecuteCampaign }) => {
   const [formType, setFormType] = useState('task'); // 'task' or 'sms'
