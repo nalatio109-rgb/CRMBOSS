@@ -711,20 +711,42 @@ const Warranties = ({ warranties, onAddWarranty, onViewWarranty }) => {
               <th>Sản phẩm</th>
               <th>Ngày Hết hạn</th>
               <th>Trạng thái</th>
+              <th>Hành động</th>
             </tr>
           </thead>
           <tbody>
             {warranties.map(w => {
               const duration = getDurationText(w.startDate, w.endDate);
               return (
-                <tr key={w._id} onClick={()=>onViewWarranty(w)} style={{cursor:'pointer'}}>
+                <tr key={w._id}>
                   <td>{w.customerId?.name || 'N/A'}</td>
                   <td>{w.productName}</td>
                   <td>
                     {new Date(w.endDate).toLocaleDateString('vi-VN')}
                     <span style={{ fontSize: '0.8rem', color: '#94a3b8', marginLeft: '6px' }}>({duration})</span>
                   </td>
-                  <td><span className={`priority-badge priority-${w.status==='Active'?'normal':'high'}`}>{w.status}</span></td>
+                  <td>
+                    <span className={`priority-badge priority-${w.status==='Active'?'normal':'high'}`}>
+                      {w.status === 'Active' ? 'Đang kích hoạt' : 'Hết hạn'}
+                    </span>
+                  </td>
+                  <td>
+                    <button 
+                      onClick={() => onViewWarranty(w)} 
+                      style={{
+                        background: 'rgba(16, 185, 129, 0.2)',
+                        border: 'none',
+                        color: '#10b981',
+                        padding: '6px 12px',
+                        borderRadius: 6,
+                        cursor: 'pointer',
+                        fontWeight: 'bold',
+                        fontSize: '0.8rem'
+                      }}
+                    >
+                      Nhật ký & Chi tiết
+                    </button>
+                  </td>
                 </tr>
               );
             })}
