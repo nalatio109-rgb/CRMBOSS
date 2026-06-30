@@ -380,9 +380,6 @@ app.post('/api/deals', auth, async (req, res) => {
 });
 
 app.post('/api/orders', auth, async (req, res) => {
-  if (req.user && req.user.role === 'staff') {
-    return res.status(403).json({ message: 'Access denied: Staff cannot create orders' });
-  }
   try {
     const order = new Order(req.body);
     res.status(201).json(await order.save());

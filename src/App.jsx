@@ -462,7 +462,7 @@ const Pipeline = ({ deals, onUpdateDeal, onAddDeal, onPrint, onArchiveDeal, user
                           </button>
                         )}
                       </div>
-                      {s==='Báo giá' && user?.role === 'admin' && (
+                      {s==='Báo giá' && (
                         <button 
                           onClick={(e)=>{ e.stopPropagation(); onPrint(deal); }} 
                           style={{width:'100%',marginTop:10,padding:8,fontSize:'0.85rem',fontWeight:'bold',cursor:'pointer'}} 
@@ -1409,10 +1409,11 @@ function App() {
     try {
       const matchedCustomer = customers.find(c => c.name === deal.customer);
       const customerId = matchedCustomer ? matchedCustomer._id : null;
+      let newOrder = null;
       if (customerId) {
         const total = parseInt(String(deal.value || '').replace(/\D/g,'') || 0);
         const paid = deal.paidAmount || 0;
-        await apiFetch('/api/orders', { method: 'POST', body: JSON.stringify({
+        const res = await apiFetch('/api/orders', { method: 'POST', body: JSON.stringify({
           customerId,
           dealId: deal._id,
           totalAmount: total,
@@ -1420,10 +1421,19 @@ function App() {
           status: (paid >= total) ? 'Paid' : 'Unpaid',
           items: deal.product ? [{ productId: deal.product._id || deal.product, quantity: 1, price: total }] : []
         })});
+        newOrder = res;
       }
       await apiFetch(`/api/deals/${deal._id}`, { method: 'PUT', body: JSON.stringify({ isArchived: true }) });
-      alert('Đã chốt đơn thành công! Xem lại trong tab Đơn hàng.');
+      alert('Đã chốt đơn thành công! Đang mở hóa đơn để in...');
       fetchData();
+      if (newOrder) {
+        const populatedOrder = {
+          ...newOrder,
+          customerId: matchedCustomer,
+          dealId: deal
+        };
+        setPrintInvoice(populatedOrder);
+      }
     } catch (e) {
       alert('Lỗi chốt đơn: ' + e.message);
     }
