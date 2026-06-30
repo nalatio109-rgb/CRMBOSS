@@ -257,9 +257,10 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, user, lang }) => {
 
 // ... Dashboard, Pipeline, Schedule, SettingsView remain same
 
-const Dashboard = ({ customers, deals, onSelectCustomer, lang, user }) => {
+const Dashboard = ({ customers, deals, orders, onSelectCustomer, lang, user }) => {
   const t = translations[lang];
-  const funnelData = [{ value: deals.length, name: 'Báo giá', fill: '#6366f1' }, { value: deals.filter(d => d.stage === 'Thi công' || d.stage === 'Hoàn thành').length, name: 'Thi công', fill: '#ec4899' }, { value: deals.filter(d => d.stage === 'Hoàn thành').length, name: 'Hoàn thành', fill: '#10b981' }];
+  const activeDeals = deals.filter(d => !d.isArchived);
+  const funnelData = [{ value: activeDeals.length, name: 'Báo giá', fill: '#6366f1' }, { value: activeDeals.filter(d => d.stage === 'Thi công' || d.stage === 'Hoàn thành').length, name: 'Thi công', fill: '#ec4899' }, { value: activeDeals.filter(d => d.stage === 'Hoàn thành').length, name: 'Hoàn thành', fill: '#10b981' }];
   
   const sourcesList = ['Facebook', 'Zalo', 'TikTok', 'Google', 'Website', 'Hotline'];
   const sourceStats = sourcesList.map(src => {
@@ -280,10 +281,10 @@ const Dashboard = ({ customers, deals, onSelectCustomer, lang, user }) => {
     <div className="animate-in">
       <div className="dashboard-grid">
         {(user?.role === 'admin' || user?.role === 'accountant') && (
-          <div className="stat-card"><h3>{t.revenue}</h3><div className="stat-value">{deals.filter(d=>d.stage==='Hoàn thành').reduce((s,d)=>s+parseInt(d.value.replace(/\D/g,'')||0),0).toLocaleString('vi-VN')} đ</div></div>
+          <div className="stat-card"><h3>{t.revenue}</h3><div className="stat-value">{((orders || []).filter(o => o.status !== 'Cancelled').reduce((sum, o) => sum + (o.totalAmount || 0), 0)).toLocaleString('vi-VN')} đ</div></div>
         )}
         <div className="stat-card"><h3>{t.new_cust}</h3><div className="stat-value">{customers.length}</div></div>
-        <div className="stat-card"><h3>{t.open_deals}</h3><div className="stat-value">{deals.filter(d=>d.stage!=='Hoàn thành').length}</div></div>
+        <div className="stat-card"><h3>{t.open_deals}</h3><div className="stat-value">{activeDeals.filter(d=>d.stage!=='Hoàn thành').length}</div></div>
       </div>
       <div className="chart-container-row">
         <div className="chart-container"><h3>Sales Funnel</h3><div style={{height:250}}><ResponsiveContainer width="100%" height="100%"><FunnelChart><Tooltip /><Funnel dataKey="value" data={funnelData} isAnimationActive><LabelList position="right" fill="#94a3b8" dataKey="name" /></Funnel></FunnelChart></ResponsiveContainer></div></div>
@@ -1517,7 +1518,7 @@ function App() {
       <main className="main-content">
         <Header onSearch={setSearch} unreadCount={notifs.filter(n=>!n.isRead).length} searchRef={searchRef} user={user} onLogout={()=>{setUser(null);localStorage.removeItem('crm_user');}} />
         <AnimatePresence mode="wait">
-          {tab === 'dashboard' && <Dashboard customers={customers} deals={deals.filter(d=>!d.isArchived)} onSelectCustomer={setSelectedCust} lang={lang} user={user} />}
+          {tab === 'dashboard' && <Dashboard customers={customers} deals={deals} orders={orders} onSelectCustomer={setSelectedCust} lang={lang} user={user} />}
           {tab === 'customers' && user?.role !== 'accountant' && (
             <div className="animate-in">
               <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 15 }}>
