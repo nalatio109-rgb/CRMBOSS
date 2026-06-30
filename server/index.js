@@ -302,16 +302,6 @@ app.delete('/api/customers/:id', auth, async (req, res) => {
 // --- DEALS ---
 app.get('/api/deals', auth, async (req, res) => {
   const deals = await Deal.find().populate('product');
-  if (req.user && req.user.role === 'staff') {
-    const maskedDeals = deals.map(d => {
-      const dealObj = d.toObject();
-      dealObj.value = '***';
-      dealObj.paidAmount = 0;
-      dealObj.expectedRevenue = 0;
-      return dealObj;
-    });
-    return res.json(maskedDeals);
-  }
   res.json(deals);
 });
 

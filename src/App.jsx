@@ -437,9 +437,9 @@ const Pipeline = ({ deals, onUpdateDeal, onAddDeal, onPrint, onArchiveDeal, user
                       </div>
                       <div className="deal-footer" style={{marginTop:'1rem'}}>
                         <span style={{color:'#10b981', fontWeight:'bold', fontSize:'0.9rem'}}>
-                          {user?.role === 'admin' ? `${total.toLocaleString('vi-VN')} đ` : '*** đ'}
+                          {`${total.toLocaleString('vi-VN')} đ`}
                         </span>
-                        {debt > 0 && s==='Hoàn thành' && user?.role === 'admin' ? (
+                        {debt > 0 && s==='Hoàn thành' ? (
                           <span style={{color:'#ef4444',fontSize:'0.75rem',fontWeight:'bold'}}>
                             Nợ: {debt.toLocaleString('vi-VN')} đ
                           </span>
@@ -1736,17 +1736,8 @@ function App() {
                   <SearchableSelect name="productName" placeholder="-- Tìm / Chọn Sản phẩm --" options={products.map(p=>({value:p._id,label:p.name}))}/>
                   <input name="siteAddress" placeholder="Địa chỉ thi công" style={{padding:12,borderRadius:12,background:'rgba(255,255,255,0.05)',border:'1px solid var(--border-color)',color:'white'}}/>
                   <input name="dimensions" placeholder="Khối lượng (VD: 15m2)" style={{padding:12,borderRadius:12,background:'rgba(255,255,255,0.05)',border:'1px solid var(--border-color)',color:'white'}}/>
-                  {user?.role === 'admin' ? (
-                    <>
-                      <input name="value" placeholder="Giá trị (Ví dụ: 50000000)" required style={{padding:12,borderRadius:12,background:'rgba(255,255,255,0.05)',border:'1px solid var(--border-color)',color:'white'}}/>
-                      <input name="paidAmount" placeholder="Đã thanh toán (Ví dụ: 20000000)" type="number" style={{padding:12,borderRadius:12,background:'rgba(255,255,255,0.05)',border:'1px solid var(--border-color)',color:'white'}}/>
-                    </>
-                  ) : (
-                    <>
-                      <input type="hidden" name="value" value="0" />
-                      <input type="hidden" name="paidAmount" value="0" />
-                    </>
-                  )}
+                  <input name="value" placeholder="Giá trị (Ví dụ: 50000000)" required style={{padding:12,borderRadius:12,background:'rgba(255,255,255,0.05)',border:'1px solid var(--border-color)',color:'white'}}/>
+                  <input name="paidAmount" placeholder="Đã thanh toán (Ví dụ: 20000000)" type="number" style={{padding:12,borderRadius:12,background:'rgba(255,255,255,0.05)',border:'1px solid var(--border-color)',color:'white'}}/>
                   <input name="assignee" placeholder="Đội phụ trách (Tùy chọn)" style={{padding:12,borderRadius:12,background:'rgba(255,255,255,0.05)',border:'1px solid var(--border-color)',color:'white'}}/>
                 </>
               )}
