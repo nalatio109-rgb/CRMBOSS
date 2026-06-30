@@ -522,9 +522,9 @@ const Orders = ({ orders, onViewInvoice, onDeleteOrder, onUpdateOrderStatus, use
                     onChange={(e) => onUpdateOrderStatus(o._id, e.target.value)}
                     style={{ padding: '6px 10px', borderRadius: 8, background: '#0f172a', border: '1px solid var(--border-color)', color: 'white', fontSize: '0.8rem', cursor: 'pointer' }}
                   >
-                    <option value="Paid" style={{ color: '#0f172a' }}>Đã thanh toán</option>
-                    <option value="Unpaid" style={{ color: '#0f172a' }}>Chờ thanh toán</option>
-                    <option value="Cancelled" style={{ color: '#0f172a' }}>Đã hủy</option>
+                    <option value="Paid" style={{ color: 'white', background: '#0f172a' }}>Đã thanh toán</option>
+                    <option value="Unpaid" style={{ color: 'white', background: '#0f172a' }}>Chờ thanh toán</option>
+                    <option value="Cancelled" style={{ color: 'white', background: '#0f172a' }}>Đã hủy</option>
                   </select>
                 ) : (
                   <span className={`priority-badge priority-${o.status === 'Paid' ? 'normal' : o.status === 'Unpaid' ? 'medium' : 'high'}`}>
@@ -869,9 +869,9 @@ const SettingsView = ({ user, lang, setLang, onBackup, onRestore, apiFetch }) =>
                   onChange={(e) => setRole(e.target.value)}
                   style={{ padding: 12, borderRadius: 12, background: '#0f172a', border: '1px solid var(--border-color)', color: 'white' }}
                 >
-                  <option value="staff" style={{ color: '#0f172a' }}>Quyền: Nhân viên (staff)</option>
-                  <option value="accountant" style={{ color: '#0f172a' }}>Quyền: Kế toán (accountant)</option>
-                  <option value="admin" style={{ color: '#0f172a' }}>Quyền: Boss / Admin (admin)</option>
+                  <option value="staff" style={{ color: 'white', background: '#0f172a' }}>Quyền: Nhân viên (staff)</option>
+                  <option value="accountant" style={{ color: 'white', background: '#0f172a' }}>Quyền: Kế toán (accountant)</option>
+                  <option value="admin" style={{ color: 'white', background: '#0f172a' }}>Quyền: Boss / Admin (admin)</option>
                 </select>
                 {error && <div style={{ color: '#ef4444', fontSize: '0.8rem' }}>{error}</div>}
                 {success && <div style={{ color: '#10b981', fontSize: '0.8rem' }}>{success}</div>}
@@ -1659,12 +1659,12 @@ function App() {
                       defaultValue={selectedCustEdit?.source || 'Facebook'} 
                       style={{ padding: 12, borderRadius: 12, background: '#0f172a', border: '1px solid var(--border-color)', color: 'white', width: '100%', boxSizing: 'border-box' }}
                     >
-                      <option value="Facebook" style={{ color: '#0f172a' }}>Facebook (Mạng xã hội)</option>
-                      <option value="Zalo" style={{ color: '#0f172a' }}>Zalo (Zalo Chat / OA)</option>
-                      <option value="TikTok" style={{ color: '#0f172a' }}>TikTok (Mạng xã hội)</option>
-                      <option value="Google" style={{ color: '#0f172a' }}>Google (Tìm kiếm)</option>
-                      <option value="Website" style={{ color: '#0f172a' }}>Website (Web công ty)</option>
-                      <option value="Hotline" style={{ color: '#0f172a' }}>Hotline (Gọi trực tiếp)</option>
+                      <option value="Facebook" style={{ color: 'white', background: '#0f172a' }}>Facebook (Mạng xã hội)</option>
+                      <option value="Zalo" style={{ color: 'white', background: '#0f172a' }}>Zalo (Zalo Chat / OA)</option>
+                      <option value="TikTok" style={{ color: 'white', background: '#0f172a' }}>TikTok (Mạng xã hội)</option>
+                      <option value="Google" style={{ color: 'white', background: '#0f172a' }}>Google (Tìm kiếm)</option>
+                      <option value="Website" style={{ color: 'white', background: '#0f172a' }}>Website (Web công ty)</option>
+                      <option value="Hotline" style={{ color: 'white', background: '#0f172a' }}>Hotline (Gọi trực tiếp)</option>
                     </select>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
@@ -1674,9 +1674,9 @@ function App() {
                       defaultValue={selectedCustEdit?.priority || 'Normal'} 
                       style={{ padding: 12, borderRadius: 12, background: '#0f172a', border: '1px solid var(--border-color)', color: 'white', width: '100%', boxSizing: 'border-box' }}
                     >
-                      <option value="High" style={{ color: '#0f172a' }}>High</option>
-                      <option value="Normal" style={{ color: '#0f172a' }}>Normal</option>
-                      <option value="Low" style={{ color: '#0f172a' }}>Low</option>
+                      <option value="High" style={{ color: 'white', background: '#0f172a' }}>High</option>
+                      <option value="Normal" style={{ color: 'white', background: '#0f172a' }}>Normal</option>
+                      <option value="Low" style={{ color: 'white', background: '#0f172a' }}>Low</option>
                     </select>
                   </div>
                 </>
@@ -1703,8 +1703,8 @@ function App() {
                   <input name="assignee" placeholder="Đội phụ trách (Tùy chọn)" style={{padding:12,borderRadius:12,background:'rgba(255,255,255,0.05)',border:'1px solid var(--border-color)',color:'white'}}/>
                 </>
               )}
-              {isModal === 'order' && <><select name="customerId" required style={{padding:12,borderRadius:12,background:'#0f172a',border:'1px solid var(--border-color)',color:'white'}}><option value="" disabled selected style={{ color: '#94a3b8' }}>-- Chọn Khách hàng --</option>{customers.map(c=><option key={c._id} value={c._id} style={{ color: '#0f172a' }}>{c.name}</option>)}</select><select name="dealId" required style={{padding:12,borderRadius:12,background:'#0f172a',border:'1px solid var(--border-color)',color:'white'}}><option value="" disabled selected style={{ color: '#94a3b8' }}>-- Chọn Công trình --</option>{deals.map(d=><option key={d._id} value={d._id} style={{ color: '#0f172a' }}>{d.title}</option>)}</select><input name="totalAmount" placeholder="Tổng tiền" type="number" required style={{padding:12,borderRadius:12,background:'rgba(255,255,255,0.05)',border:'1px solid var(--border-color)',color:'white'}}/></>}
-              {isModal === 'warranty' && <><select name="customerId" required style={{padding:12,borderRadius:12,background:'#0f172a',border:'1px solid var(--border-color)',color:'white'}}><option value="" disabled selected style={{ color: '#94a3b8' }}>-- Chọn Khách hàng --</option>{customers.map(c=><option key={c._id} value={c._id} style={{ color: '#0f172a' }}>{c.name}</option>)}</select><select name="productName" required style={{padding:12,borderRadius:12,background:'#0f172a',border:'1px solid var(--border-color)',color:'white'}}><option value="" disabled selected style={{ color: '#94a3b8' }}>-- Chọn Sản phẩm --</option>{products.map(p=><option key={p._id} value={p.name} style={{ color: '#0f172a' }}>{p.name}</option>)}</select></>}
+              {isModal === 'order' && <><select name="customerId" required style={{padding:12,borderRadius:12,background:'#0f172a',border:'1px solid var(--border-color)',color:'white'}}><option value="" disabled selected style={{ color: '#94a3b8', background: '#0f172a' }}>-- Chọn Khách hàng --</option>{customers.map(c=><option key={c._id} value={c._id} style={{ color: 'white', background: '#0f172a' }}>{c.name}</option>)}</select><select name="dealId" required style={{padding:12,borderRadius:12,background:'#0f172a',border:'1px solid var(--border-color)',color:'white'}}><option value="" disabled selected style={{ color: '#94a3b8', background: '#0f172a' }}>-- Chọn Công trình --</option>{deals.map(d=><option key={d._id} value={d._id} style={{ color: 'white', background: '#0f172a' }}>{d.title}</option>)}</select><input name="totalAmount" placeholder="Tổng tiền" type="number" required style={{padding:12,borderRadius:12,background:'rgba(255,255,255,0.05)',border:'1px solid var(--border-color)',color:'white'}}/></>}
+              {isModal === 'warranty' && <><select name="customerId" required style={{padding:12,borderRadius:12,background:'#0f172a',border:'1px solid var(--border-color)',color:'white'}}><option value="" disabled selected style={{ color: '#94a3b8', background: '#0f172a' }}>-- Chọn Khách hàng --</option>{customers.map(c=><option key={c._id} value={c._id} style={{ color: 'white', background: '#0f172a' }}>{c.name}</option>)}</select><select name="productName" required style={{padding:12,borderRadius:12,background:'#0f172a',border:'1px solid var(--border-color)',color:'white'}}><option value="" disabled selected style={{ color: '#94a3b8', background: '#0f172a' }}>-- Chọn Sản phẩm --</option>{products.map(p=><option key={p._id} value={p.name} style={{ color: 'white', background: '#0f172a' }}>{p.name}</option>)}</select></>}
               {isModal === 'warranty_log' && selectedWarranty && <><h3 style={{color:'white',marginBottom:10}}>Ghi nhận sự cố</h3><input name="issue" placeholder="Mô tả sự cố (VD: kẹt motor)" required style={{padding:12,borderRadius:12,background:'rgba(255,255,255,0.05)',border:'1px solid var(--border-color)',color:'white'}}/><input name="resolution" placeholder="Cách xử lý (VD: thay hành trình)" style={{padding:12,borderRadius:12,background:'rgba(255,255,255,0.05)',border:'1px solid var(--border-color)',color:'white'}}/></>}
               <button type="submit" className="btn-primary" style={{padding:12}}>Lưu</button>
               <button type="button" onClick={()=>setIsModal(null)} style={{background:'none',border:'none',color:'white'}}>Hủy</button>
