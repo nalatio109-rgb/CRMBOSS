@@ -371,9 +371,6 @@ app.delete('/api/products/:id', auth, async (req, res) => {
 
 // --- ORDERS ---
 app.get('/api/orders', auth, async (req, res) => {
-  if (req.user && req.user.role === 'staff') {
-    return res.status(403).json({ message: 'Access denied: Staff cannot view orders' });
-  }
   res.json(await Order.find().populate('customerId dealId items.productId').sort({ createdAt: -1 }));
 });
 

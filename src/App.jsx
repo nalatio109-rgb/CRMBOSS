@@ -235,7 +235,7 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, user, lang }) => {
     user?.role !== 'accountant' && { id: 'customers', icon: Users, label: t.customers, key: '2' }, 
     { id: 'deals', icon: Target, label: t.deals, key: '3' }, 
     { id: 'products', icon: FileSpreadsheet, label: t.products, key: '4' }, 
-    (user?.role === 'admin' || user?.role === 'accountant') && { id: 'orders', icon: DollarSign, label: t.orders, key: '5' }, 
+    { id: 'orders', icon: DollarSign, label: t.orders, key: '5' }, 
     { id: 'warranties', icon: Shield, label: t.warranties, key: '6' }, 
     { id: 'schedule', icon: Calendar, label: t.schedule, key: '7' }, 
     { id: 'settings', icon: Settings, label: t.settings, key: '8' }
@@ -279,7 +279,7 @@ const Dashboard = ({ customers, deals, onSelectCustomer, lang, user }) => {
   return (
     <div className="animate-in">
       <div className="dashboard-grid">
-        {user?.role === 'admin' && (
+        {(user?.role === 'admin' || user?.role === 'accountant') && (
           <div className="stat-card"><h3>{t.revenue}</h3><div className="stat-value">{deals.filter(d=>d.stage==='Hoàn thành').reduce((s,d)=>s+parseInt(d.value.replace(/\D/g,'')||0),0).toLocaleString('vi-VN')} đ</div></div>
         )}
         <div className="stat-card"><h3>{t.new_cust}</h3><div className="stat-value">{customers.length}</div></div>
@@ -1302,7 +1302,7 @@ function App() {
         apiFetch('/api/deals'), 
         apiFetch('/api/notifications'), 
         apiFetch('/api/products'), 
-        (user.role === 'admin' || user.role === 'accountant') ? apiFetch('/api/orders') : Promise.resolve([]), 
+        apiFetch('/api/orders'), 
         apiFetch('/api/warranties'),
         apiFetch('/api/tasks')
       ]);
@@ -1437,7 +1437,7 @@ function App() {
         if (e.key === '2' && user?.role !== 'accountant') setTab('customers');
         if (e.key === '3') setTab('deals');
         if (e.key === '4') setTab('products');
-        if (e.key === '5' && (user?.role === 'admin' || user?.role === 'accountant')) setTab('orders');
+        if (e.key === '5') setTab('orders');
         if (e.key === '6') setTab('warranties');
         if (e.key === '7') setTab('schedule');
         if (e.key === '8') setTab('settings');
@@ -1576,7 +1576,7 @@ function App() {
           )}
           {tab === 'deals' && <Pipeline deals={deals.filter(d=>!d.isArchived)} onUpdateDeal={(id,u)=>{apiFetch(`/api/deals/${id}`,{method:'PUT',body:JSON.stringify(u)}).then(fetchData);}} onAddDeal={()=>setIsModal('deal')} onPrint={(d)=>setPrintDeal(d)} onArchiveDeal={handleCloseDeal} user={user} />}
           {tab === 'products' && <Products products={filteredProducts} onAddProduct={()=>{setSelectedProduct(null);setIsModal('product');}} onEditProduct={(p)=>{setSelectedProduct(p);setIsModal('product');}} onDeleteProduct={async (id)=>{if(window.confirm('Xóa sản phẩm này?')){await apiFetch(`/api/products/${id}`,{method:'DELETE'});fetchData();}}} />}
-          {tab === 'orders' && (user?.role === 'admin' || user?.role === 'accountant') && (
+          {tab === 'orders' && (
             <Orders 
               orders={orders} 
               onViewInvoice={(o) => setPrintInvoice(o)} 
