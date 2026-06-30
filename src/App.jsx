@@ -1279,7 +1279,14 @@ function App() {
   const apiFetch = async (url, options = {}) => {
     const headers = { 'Content-Type': 'application/json', ...(user ? { 'Authorization': `Bearer ${user.token}` } : {}), ...options.headers };
     const res = await fetch(`${API_BASE_URL}${url}`, { ...options, headers });
-    if (!res.ok) throw new Error('API Error');
+    if (!res.ok) {
+      let errMsg = 'API Error';
+      try {
+        const errJson = await res.json();
+        if (errJson && errJson.message) errMsg = errJson.message;
+      } catch (e) {}
+      throw new Error(errMsg);
+    }
     return res.json();
   };
 
