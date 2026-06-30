@@ -255,23 +255,69 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, user, lang }) => {
   );
 };
 
-// ... Dashboard, Pipeline, Schedule, SettingsView remain same
-
 const Dashboard = ({ customers, deals, orders, onSelectCustomer, lang, user }) => {
   const t = translations[lang];
-  const activeDeals = deals.filter(d => !d.isArchived);
+  
+  // Date filtering state
+  const [filterType, setFilterType] = useState('all');
+  const [customStart, setCustomStart] = useState('');
+  const [customEnd, setCustomEnd] = useState('');
+
+  const getFilterRange = () => {
+    const now = new Date();
+    let start = null;
+    let end = null;
+    
+    if (filterType === 'today') {
+      start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+      end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+    } else if (filterType === 'yesterday') {
+      const yesterday = new Date();
+      yesterday.setDate(now.getDate() - 1);
+      start = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 0, 0, 0);
+      end = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 23, 59, 59);
+    } else if (filterType === '7days') {
+      const past7 = new Date();
+      past7.setDate(now.getDate() - 7);
+      start = new Date(past7.getFullYear(), past7.getMonth(), past7.getDate(), 0, 0, 0);
+      end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+    } else if (filterType === 'thisMonth') {
+      start = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0);
+      end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+    } else if (filterType === 'custom') {
+      if (customStart) start = new Date(customStart + 'T00:00:00');
+      if (customEnd) end = new Date(customEnd + 'T23:59:59');
+    }
+    return { start, end };
+  };
+
+  const { start, end } = getFilterRange();
+
+  const filterByDate = (item) => {
+    if (!item.createdAt) return true;
+    const date = new Date(item.createdAt);
+    if (start && date < start) return false;
+    if (end && date > end) return false;
+    return true;
+  };
+
+  const filteredOrders = (orders || []).filter(filterByDate);
+  const filteredCustomers = (customers || []).filter(filterByDate);
+  const filteredDeals = (deals || []).filter(filterByDate);
+  
+  const activeDeals = filteredDeals.filter(d => !d.isArchived);
   const funnelData = [{ value: activeDeals.length, name: 'Báo giá', fill: '#6366f1' }, { value: activeDeals.filter(d => d.stage === 'Thi công' || d.stage === 'Hoàn thành').length, name: 'Thi công', fill: '#ec4899' }, { value: activeDeals.filter(d => d.stage === 'Hoàn thành').length, name: 'Hoàn thành', fill: '#10b981' }];
   
   const sourcesList = ['Facebook', 'Zalo', 'TikTok', 'Google', 'Website', 'Hotline'];
   const sourceStats = sourcesList.map(src => {
-    const count = customers.filter(c => (c.source || 'Facebook').toLowerCase() === src.toLowerCase()).length;
+    const count = filteredCustomers.filter(c => (c.source || 'Facebook').toLowerCase() === src.toLowerCase()).length;
     return { name: src, value: count };
   });
 
   const sourceColors = {
     Facebook: '#1877F2',
     Zalo: '#0068FF',
-    TikTok: '#ec4899', // Pink-red for dark UI
+    TikTok: '#ec4899',
     Google: '#ea4335',
     Website: '#10b981',
     Hotline: '#f59e0b'
@@ -279,16 +325,91 @@ const Dashboard = ({ customers, deals, orders, onSelectCustomer, lang, user }) =
 
   return (
     <div className="animate-in">
+      {/* Date Filter Panel */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        background: 'rgba(30, 41, 59, 0.4)',
+        border: '1px solid rgba(255, 255, 255, 0.05)',
+        padding: '12px 20px',
+        borderRadius: '16px',
+        marginBottom: '20px',
+        flexWrap: 'wrap',
+        gap: '15px'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: 'bold' }}>Bộ lọc thời gian:</span>
+          <select 
+            value={filterType} 
+            onChange={(e) => setFilterType(e.target.value)}
+            style={{
+              padding: '8px 12px',
+              borderRadius: '8px',
+              background: '#0f172a',
+              border: '1px solid var(--border-color)',
+              color: 'white',
+              fontSize: '0.85rem',
+              cursor: 'pointer'
+            }}
+          >
+            <option value="all">Tất cả thời gian</option>
+            <option value="today">Hôm nay</option>
+            <option value="yesterday">Hôm qua</option>
+            <option value="7days">7 ngày qua</option>
+            <option value="thisMonth">Tháng này</option>
+            <option value="custom">Tùy chỉnh khoảng ngày</option>
+          </select>
+        </div>
+
+        {filterType === 'custom' && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }} className="animate-in">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <span style={{ color: '#64748b', fontSize: '0.8rem' }}>Từ:</span>
+              <input 
+                type="date" 
+                value={customStart} 
+                onChange={(e) => setCustomStart(e.target.value)}
+                style={{
+                  padding: '6px 10px',
+                  borderRadius: '8px',
+                  background: '#0f172a',
+                  border: '1px solid var(--border-color)',
+                  color: 'white',
+                  fontSize: '0.85rem'
+                }}
+              />
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <span style={{ color: '#64748b', fontSize: '0.8rem' }}>Đến:</span>
+              <input 
+                type="date" 
+                value={customEnd} 
+                onChange={(e) => setCustomEnd(e.target.value)}
+                style={{
+                  padding: '6px 10px',
+                  borderRadius: '8px',
+                  background: '#0f172a',
+                  border: '1px solid var(--border-color)',
+                  color: 'white',
+                  fontSize: '0.85rem'
+                }}
+              />
+            </div>
+          </div>
+        )}
+      </div>
+
       <div className="dashboard-grid">
         {(user?.role === 'admin' || user?.role === 'accountant') && (
-          <div className="stat-card"><h3>{t.revenue}</h3><div className="stat-value">{((orders || []).filter(o => o.status !== 'Cancelled').reduce((sum, o) => sum + (o.totalAmount || 0), 0)).toLocaleString('vi-VN')} đ</div></div>
+          <div className="stat-card"><h3>{t.revenue}</h3><div className="stat-value">{((filteredOrders || []).filter(o => o.status !== 'Cancelled').reduce((sum, o) => sum + (o.totalAmount || 0), 0)).toLocaleString('vi-VN')} đ</div></div>
         )}
-        <div className="stat-card"><h3>{t.new_cust}</h3><div className="stat-value">{customers.length}</div></div>
+        <div className="stat-card"><h3>{t.new_cust}</h3><div className="stat-value">{filteredCustomers.length}</div></div>
         <div className="stat-card"><h3>{t.open_deals}</h3><div className="stat-value">{activeDeals.filter(d=>d.stage!=='Hoàn thành').length}</div></div>
       </div>
       <div className="chart-container-row">
         <div className="chart-container"><h3>Sales Funnel</h3><div style={{height:250}}><ResponsiveContainer width="100%" height="100%"><FunnelChart><Tooltip /><Funnel dataKey="value" data={funnelData} isAnimationActive><LabelList position="right" fill="#94a3b8" dataKey="name" /></Funnel></FunnelChart></ResponsiveContainer></div></div>
-        <div className="chart-container"><h3>Priority</h3><div style={{height:250}}><ResponsiveContainer width="100%" height="100%"><PieChart><Pie data={[{n:'High',v:customers.filter(c=>c.priority==='High').length},{n:'Norm',v:customers.filter(c=>c.priority==='Normal').length},{n:'Low',v:customers.filter(c=>c.priority==='Low').length}]} innerRadius={60} outerRadius={80} dataKey="v" nameKey="n"><Cell fill="#ef4444"/><Cell fill="#6366f1"/><Cell fill="#94a3b8"/></Pie><Tooltip /></PieChart></ResponsiveContainer></div></div>
+        <div className="chart-container"><h3>Priority</h3><div style={{height:250}}><ResponsiveContainer width="100%" height="100%"><PieChart><Pie data={[{n:'High',v:filteredCustomers.filter(c=>c.priority==='High').length},{n:'Norm',v:filteredCustomers.filter(c=>c.priority==='Normal').length},{n:'Low',v:filteredCustomers.filter(c=>c.priority==='Low').length}]} innerRadius={60} outerRadius={80} dataKey="v" nameKey="n"><Cell fill="#ef4444"/><Cell fill="#6366f1"/><Cell fill="#94a3b8"/></Pie><Tooltip /></PieChart></ResponsiveContainer></div></div>
       </div>
       <div className="chart-container-row" style={{ marginTop: '1.5rem' }}>
         <div className="chart-container">
@@ -333,7 +454,7 @@ const Dashboard = ({ customers, deals, orders, onSelectCustomer, lang, user }) =
           <h3>Hiệu Quả Mạng Xã Hội & CSKH</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 15 }}>
             {sourceStats.map(stat => {
-              const total = customers.length || 1;
+              const total = filteredCustomers.length || 1;
               const percentage = Math.round((stat.value / total) * 100);
               const color = sourceColors[stat.name];
               
@@ -355,7 +476,7 @@ const Dashboard = ({ customers, deals, orders, onSelectCustomer, lang, user }) =
           </div>
         </div>
       </div>
-      <div className="section-card" style={{ marginTop: '1.5rem' }}><h2>{t.recent}</h2><table className="data-table"><tbody>{customers.slice(0,5).map(c=>(<tr key={c._id} onClick={()=>onSelectCustomer(c)} style={{cursor:'pointer'}}><td>{c.name}</td><td><span className={`priority-badge priority-${(c.priority||'Normal').toLowerCase()}`}>{c.priority||'Normal'}</span></td><td>{c.status}</td></tr>))}</tbody></table></div>
+      <div className="section-card" style={{ marginTop: '1.5rem' }}><h2>{t.recent}</h2><table className="data-table"><tbody>{filteredCustomers.slice(0,5).map(c=>(<tr key={c._id} onClick={()=>onSelectCustomer(c)} style={{cursor:'pointer'}}><td>{c.name}</td><td><span className={`priority-badge priority-${(c.priority||'Normal').toLowerCase()}`}>{c.priority||'Normal'}</span></td><td>{c.status}</td></tr>))}</tbody></table></div>
     </div>
   );
 };
