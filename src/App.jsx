@@ -1543,6 +1543,10 @@ function App() {
     try {
       const matchedCustomer = customers.find(c => c.name === deal.customer);
       const customerId = matchedCustomer ? matchedCustomer._id : null;
+      
+      const warrantyYearsInput = prompt('Nhập số năm bảo hành cho công trình này (ví dụ: 1, 2, 3...):', '2');
+      if (warrantyYearsInput === null) return; // User cancelled archiving
+      
       let newOrder = null;
       if (customerId) {
         const total = parseInt(String(deal.value || '').replace(/\D/g,'') || 0);
@@ -1556,9 +1560,26 @@ function App() {
           items: deal.product ? [{ productId: deal.product._id || deal.product, quantity: 1, price: total }] : []
         })});
         newOrder = res;
+        
+        // Auto-create Warranty if years specified
+        const years = parseInt(warrantyYearsInput || 0);
+        if (years > 0) {
+          const endDate = new Date();
+          endDate.setFullYear(endDate.getFullYear() + years);
+          const productName = deal.productName || (deal.product && (deal.product.name || deal.product)) || 'Cửa cuốn / Phụ kiện';
+          await apiFetch('/api/warranties', {
+            method: 'POST',
+            body: JSON.stringify({
+              customerId,
+              dealId: deal._id,
+              productName,
+              endDate
+            })
+          });
+        }
       }
       await apiFetch(`/api/deals/${deal._id}`, { method: 'PUT', body: JSON.stringify({ isArchived: true }) });
-      alert('Đã chốt đơn thành công! Đang mở hóa đơn để in...');
+      alert('Đã chốt đơn và tạo phiếu bảo hành thành công! Đang mở hóa đơn để in...');
       fetchData();
       if (newOrder) {
         const populatedOrder = {
@@ -1819,15 +1840,15 @@ function App() {
               }
               if (isModal === 'order') await apiFetch('/api/orders',{method:'POST',body:JSON.stringify({customerId:fd.get('customerId'),dealId:fd.get('dealId'),totalAmount:fd.get('totalAmount')})});
               if (isModal === 'warranty') {
-                const years = parseInt(fd.get('duration') || 2);
-                const end = new Date();
-                end.setFullYear(end.getFullYear() + years);
+                const years = parseInt(fd.get('warrantyYears') || 2);
+                const endDate = new Date();
+                endDate.setFullYear(endDate.getFullYear() + years);
                 await apiFetch('/api/warranties', {
                   method: 'POST',
                   body: JSON.stringify({
                     productName: fd.get('productName'),
                     customerId: fd.get('customerId'),
-                    endDate: end
+                    endDate: endDate
                   })
                 });
               }
@@ -1915,12 +1936,7 @@ function App() {
                     <option value="" disabled selected style={{ color: '#94a3b8', background: '#0f172a' }}>-- Chọn Sản phẩm --</option>
                     {products.map(p=><option key={p._id} value={p.name} style={{ color: 'white', background: '#0f172a' }}>{p.name}</option>)}
                   </select>
-                  <select name="duration" required style={{padding:12,borderRadius:12,background:'#0f172a',border:'1px solid var(--border-color)',color:'white'}}>
-                    <option value="2">Thời gian bảo hành: 2 năm (Mặc định)</option>
-                    <option value="1">Thời gian bảo hành: 1 năm</option>
-                    <option value="3">Thời gian bảo hành: 3 năm</option>
-                    <option value="5">Thời gian bảo hành: 5 năm</option>
-                  </select>
+                  <input name="warrantyYears" type="number" min="1" max="10" defaultValue="2" placeholder="Số năm bảo hành (mặc định: 2)" required style={{padding:12,borderRadius:12,background:'rgba(255,255,255,0.05)',border:'1px solid var(--border-color)',color:'white'}}/>
                 </>
               )}
               {isModal === 'warranty_log' && selectedWarranty && <><h3 style={{color:'white',marginBottom:10}}>Ghi nhận sự cố</h3><input name="issue" placeholder="Mô tả sự cố (VD: kẹt motor)" required style={{padding:12,borderRadius:12,background:'rgba(255,255,255,0.05)',border:'1px solid var(--border-color)',color:'white'}}/><input name="resolution" placeholder="Cách xử lý (VD: thay hành trình)" style={{padding:12,borderRadius:12,background:'rgba(255,255,255,0.05)',border:'1px solid var(--border-color)',color:'white'}}/></>}
