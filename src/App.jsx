@@ -14,6 +14,7 @@ import {
   Briefcase,
   Bell,
   X,
+  ShieldCheck,
   Circle,
   ArrowUpRight,
   Filter,
