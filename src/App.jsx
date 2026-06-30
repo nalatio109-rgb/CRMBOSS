@@ -1618,13 +1618,20 @@ function App() {
                 }
               }}
               onCollectPayment={async (o) => {
-                const amount = prompt(`Nhập TỔNG SỐ TIỀN đã thu lũy kế của đơn hàng này từ trước đến nay (Tổng cộng đơn hàng là: ${o.totalAmount.toLocaleString('vi-VN')} đ, hiện đã thu: ${(o.paidAmount || 0).toLocaleString('vi-VN')} đ):`, o.paidAmount || 0);
+                const currentPaid = o.status === 'Paid' ? o.totalAmount : (o.paidAmount || 0);
+                const remaining = Math.max(0, o.totalAmount - currentPaid);
+                const amount = prompt(`Nhập SỐ TIỀN THU THÊM đợt này (Còn nợ: ${remaining.toLocaleString('vi-VN')} đ):`, remaining);
                 if (amount === null) return;
-                const paidVal = parseInt(amount.replace(/\D/g, '') || 0);
-                if (paidVal > o.totalAmount) {
-                  alert('Lỗi: Số tiền thanh toán không được lớn hơn tổng số tiền của đơn hàng!');
+                const collectVal = parseInt(amount.replace(/\D/g, '') || 0);
+                if (collectVal <= 0) {
+                  alert('Lỗi: Số tiền thu thêm phải lớn hơn 0!');
                   return;
                 }
+                if (collectVal > remaining) {
+                  alert(`Lỗi: Số tiền thu thêm không được lớn hơn số tiền còn nợ (${remaining.toLocaleString('vi-VN')} đ)!`);
+                  return;
+                }
+                const paidVal = currentPaid + collectVal;
                 try {
                   await apiFetch(`/api/orders/${o._id}`, {
                     method: 'PUT',
@@ -1633,7 +1640,7 @@ function App() {
                       status: (paidVal >= o.totalAmount) ? 'Paid' : 'Unpaid'
                     })
                   });
-                  alert('Cập nhật thu tiền thành công!');
+                  alert(`Thu thêm ${collectVal.toLocaleString('vi-VN')} đ thành công!`);
                   fetchData();
                 } catch (e) {
                   alert('Lỗi cập nhật thanh toán: ' + e.message);
