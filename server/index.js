@@ -382,7 +382,45 @@ app.post('/api/deals', auth, async (req, res) => {
 app.post('/api/orders', auth, async (req, res) => {
   try {
     const order = new Order(req.body);
-    res.status(201).json(await order.save());
+    const saved = await order.save();
+    try {
+      if (req.body.items && req.body.items.length > 0) {
+        for (const item of req.body.items) {
+          const product = await Product.findById(item.productId);
+          if (product) {
+            const startDate = new Date();
+            const endDate = new Date();
+            endDate.setFullYear(startDate.getFullYear() + 2);
+            await new Warranty({
+              customerId: req.body.customerId,
+              dealId: req.body.dealId || null,
+              productName: product.name,
+              startDate,
+              endDate,
+              status: 'Active'
+            }).save();
+          }
+        }
+      } else if (req.body.dealId) {
+        const deal = await Deal.findById(req.body.dealId).populate('product');
+        if (deal && deal.product) {
+          const startDate = new Date();
+          const endDate = new Date();
+          endDate.setFullYear(startDate.getFullYear() + 2);
+          await new Warranty({
+            customerId: req.body.customerId,
+            dealId: req.body.dealId,
+            productName: deal.product.name,
+            startDate,
+            endDate,
+            status: 'Active'
+          }).save();
+        }
+      }
+    } catch (e) {
+      console.error('Error auto-creating warranty:', e);
+    }
+    res.status(201).json(saved);
   } catch (err) { res.status(400).json({ message: err.message }); }
 });
 

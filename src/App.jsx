@@ -1818,7 +1818,19 @@ function App() {
                 await apiFetch('/api/deals',{method:'POST',body:JSON.stringify({title:fd.get('title'),customer:customerName,product:matchedProduct?._id,value:fd.get('value'),siteAddress:fd.get('siteAddress'),dimensions:fd.get('dimensions'),paidAmount:parseInt(fd.get('paidAmount')||0),assignee:fd.get('assignee')})});
               }
               if (isModal === 'order') await apiFetch('/api/orders',{method:'POST',body:JSON.stringify({customerId:fd.get('customerId'),dealId:fd.get('dealId'),totalAmount:fd.get('totalAmount')})});
-              if (isModal === 'warranty') await apiFetch('/api/warranties',{method:'POST',body:JSON.stringify({productName:fd.get('productName'),customerId:fd.get('customerId'),endDate:new Date(new Date().setFullYear(new Date().getFullYear()+1))})});
+              if (isModal === 'warranty') {
+                const years = parseInt(fd.get('duration') || 2);
+                const end = new Date();
+                end.setFullYear(end.getFullYear() + years);
+                await apiFetch('/api/warranties', {
+                  method: 'POST',
+                  body: JSON.stringify({
+                    productName: fd.get('productName'),
+                    customerId: fd.get('customerId'),
+                    endDate: end
+                  })
+                });
+              }
               if (isModal === 'warranty_log' && selectedWarranty) {
                 const updatedLogs = [...(selectedWarranty.issuesLog || []), { issue: fd.get('issue'), resolution: fd.get('resolution') }];
                 await apiFetch(`/api/warranties/${selectedWarranty._id}`, { method: 'PUT', body: JSON.stringify({ issuesLog: updatedLogs }) });
@@ -1893,7 +1905,24 @@ function App() {
                 </>
               )}
               {isModal === 'order' && <><select name="customerId" required style={{padding:12,borderRadius:12,background:'#0f172a',border:'1px solid var(--border-color)',color:'white'}}><option value="" disabled selected style={{ color: '#94a3b8', background: '#0f172a' }}>-- Chọn Khách hàng --</option>{customers.map(c=><option key={c._id} value={c._id} style={{ color: 'white', background: '#0f172a' }}>{c.name}</option>)}</select><select name="dealId" required style={{padding:12,borderRadius:12,background:'#0f172a',border:'1px solid var(--border-color)',color:'white'}}><option value="" disabled selected style={{ color: '#94a3b8', background: '#0f172a' }}>-- Chọn Công trình --</option>{deals.map(d=><option key={d._id} value={d._id} style={{ color: 'white', background: '#0f172a' }}>{d.title}</option>)}</select><input name="totalAmount" placeholder="Tổng tiền" type="number" required style={{padding:12,borderRadius:12,background:'rgba(255,255,255,0.05)',border:'1px solid var(--border-color)',color:'white'}}/></>}
-              {isModal === 'warranty' && <><select name="customerId" required style={{padding:12,borderRadius:12,background:'#0f172a',border:'1px solid var(--border-color)',color:'white'}}><option value="" disabled selected style={{ color: '#94a3b8', background: '#0f172a' }}>-- Chọn Khách hàng --</option>{customers.map(c=><option key={c._id} value={c._id} style={{ color: 'white', background: '#0f172a' }}>{c.name}</option>)}</select><select name="productName" required style={{padding:12,borderRadius:12,background:'#0f172a',border:'1px solid var(--border-color)',color:'white'}}><option value="" disabled selected style={{ color: '#94a3b8', background: '#0f172a' }}>-- Chọn Sản phẩm --</option>{products.map(p=><option key={p._id} value={p.name} style={{ color: 'white', background: '#0f172a' }}>{p.name}</option>)}</select></>}
+              {isModal === 'warranty' && (
+                <>
+                  <select name="customerId" required style={{padding:12,borderRadius:12,background:'#0f172a',border:'1px solid var(--border-color)',color:'white'}}>
+                    <option value="" disabled selected style={{ color: '#94a3b8', background: '#0f172a' }}>-- Chọn Khách hàng --</option>
+                    {customers.map(c=><option key={c._id} value={c._id} style={{ color: 'white', background: '#0f172a' }}>{c.name}</option>)}
+                  </select>
+                  <select name="productName" required style={{padding:12,borderRadius:12,background:'#0f172a',border:'1px solid var(--border-color)',color:'white'}}>
+                    <option value="" disabled selected style={{ color: '#94a3b8', background: '#0f172a' }}>-- Chọn Sản phẩm --</option>
+                    {products.map(p=><option key={p._id} value={p.name} style={{ color: 'white', background: '#0f172a' }}>{p.name}</option>)}
+                  </select>
+                  <select name="duration" required style={{padding:12,borderRadius:12,background:'#0f172a',border:'1px solid var(--border-color)',color:'white'}}>
+                    <option value="2">Thời gian bảo hành: 2 năm (Mặc định)</option>
+                    <option value="1">Thời gian bảo hành: 1 năm</option>
+                    <option value="3">Thời gian bảo hành: 3 năm</option>
+                    <option value="5">Thời gian bảo hành: 5 năm</option>
+                  </select>
+                </>
+              )}
               {isModal === 'warranty_log' && selectedWarranty && <><h3 style={{color:'white',marginBottom:10}}>Ghi nhận sự cố</h3><input name="issue" placeholder="Mô tả sự cố (VD: kẹt motor)" required style={{padding:12,borderRadius:12,background:'rgba(255,255,255,0.05)',border:'1px solid var(--border-color)',color:'white'}}/><input name="resolution" placeholder="Cách xử lý (VD: thay hành trình)" style={{padding:12,borderRadius:12,background:'rgba(255,255,255,0.05)',border:'1px solid var(--border-color)',color:'white'}}/></>}
               <button type="submit" className="btn-primary" style={{padding:12}}>Lưu</button>
               <button type="button" onClick={()=>setIsModal(null)} style={{background:'none',border:'none',color:'white'}}>Hủy</button>
