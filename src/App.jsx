@@ -1438,6 +1438,7 @@ function App() {
   const [selectedCustEdit, setSelectedCustEdit] = useState(null);
   const [executingCampaign, setExecutingCampaign] = useState(null);
   const [selectedWarranty, setSelectedWarranty] = useState(null);
+  const [selectedWarrantyDetails, setSelectedWarrantyDetails] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [printDeal, setPrintDeal] = useState(null);
   const [printInvoice, setPrintInvoice] = useState(null);
@@ -1486,6 +1487,10 @@ function App() {
         apiFetch('/api/tasks')
       ]);
       setCustomers(c); setDeals(d); setNotifs(n); setProducts(p); setOrders(o); setWarranties(w); setTasks(t);
+      if (selectedWarrantyDetails) {
+        const found = w.find(item => item._id === selectedWarrantyDetails._id);
+        if (found) setSelectedWarrantyDetails(found);
+      }
     } catch(err) { console.error(err); }
   };
   useEffect(() => { fetchData(); }, [user]);
@@ -1839,7 +1844,7 @@ function App() {
               user={user}
             />
           )}
-          {tab === 'warranties' && <Warranties warranties={warranties} onAddWarranty={()=>setIsModal('warranty')} onViewWarranty={(w)=>{setSelectedWarranty(w); setIsModal('warranty_log');}} />}
+          {tab === 'warranties' && <Warranties warranties={warranties} onAddWarranty={()=>setIsModal('warranty')} onViewWarranty={(w)=>setSelectedWarrantyDetails(w)} />}
           {tab === 'schedule' && (
             <Schedule 
               tasks={tasks} 
@@ -2044,6 +2049,78 @@ function App() {
                           <span>{new Date(act.date).toLocaleString('vi-VN')}</span>
                         </div>
                         <div style={{fontSize: '0.9rem', color: '#e2e8f0', whiteSpace: 'pre-wrap'}}>{act.content}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        </>
+      )}</AnimatePresence>
+
+      <AnimatePresence>{selectedWarrantyDetails && (
+        <>
+          <motion.div className="drawer-overlay" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} onClick={()=>setSelectedWarrantyDetails(null)} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',zIndex:9998}} />
+          <motion.div className="drawer" initial={{x:'100%'}} animate={{x:0}} exit={{x:'100%'}} style={{position:'fixed',top:0,right:0,bottom:0,width:'450px',maxWidth:'100%',background:'#0f172a',borderLeft:'1px solid var(--border-color)',zIndex:9999,display: 'flex', flexDirection: 'column',boxShadow:'-10px 0 30px rgba(0,0,0,0.5)'}}>
+            <div className="drawer-header" style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'20px 24px',borderBottom:'1px solid var(--border-color)'}}>
+              <div style={{display:'flex',gap:10,alignItems:'center'}}>
+                <div className="avatar" style={{background:'#10b981',width:36,height:36,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center'}}><ShieldCheck size={20} style={{color:'white'}}/></div>
+                <h3 style={{margin:0,color:'white',fontSize:'1.1rem'}}>Chi tiết Bảo hành</h3>
+              </div>
+              <button onClick={()=>setSelectedWarrantyDetails(null)} style={{background:'none',border:'none',color:'#94a3b8',cursor:'pointer'}}><X size={24}/></button>
+            </div>
+            
+            <div style={{padding: '24px', flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto'}}>
+              {/* Thông tin chi tiết */}
+              <div style={{ background: 'rgba(255,255,255,0.02)', padding: '15px', borderRadius: '16px', border: '1px solid var(--border-color)', marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: 10, fontSize: '0.9rem' }}>
+                <div style={{color:'#e2e8f0'}}><strong>Khách hàng:</strong> {selectedWarrantyDetails.customerId?.name || 'N/A'}</div>
+                {selectedWarrantyDetails.customerId?.phone && <div style={{color:'#e2e8f0'}}><strong>Số điện thoại:</strong> {selectedWarrantyDetails.customerId.phone}</div>}
+                <div style={{color:'#e2e8f0'}}><strong>Sản phẩm:</strong> {selectedWarrantyDetails.productName}</div>
+                <div style={{color:'#e2e8f0'}}><strong>Ngày bắt đầu:</strong> {new Date(selectedWarrantyDetails.startDate).toLocaleDateString('vi-VN')}</div>
+                <div style={{color:'#e2e8f0'}}><strong>Ngày hết hạn:</strong> {new Date(selectedWarrantyDetails.endDate).toLocaleDateString('vi-VN')}</div>
+                <div style={{color:'#e2e8f0'}}>
+                  <strong>Trạng thái:</strong>{' '}
+                  <span className={`priority-badge priority-${selectedWarrantyDetails.status==='Active'?'normal':'high'}`} style={{marginLeft:5}}>
+                    {selectedWarrantyDetails.status === 'Active' ? 'Đang kích hoạt' : 'Hết hạn'}
+                  </span>
+                </div>
+              </div>
+              
+              {/* Nhật ký bảo hành */}
+              <div style={{flex: 1, display: 'flex', flexDirection: 'column'}}>
+                <div style={{display:'flex', justifyContext:'space-between', justifyContent:'space-between', alignItems:'center', marginBottom: '15px'}}>
+                  <h4 style={{margin:0,color:'white'}}>Nhật ký bảo hành / Sửa chữa</h4>
+                  <button 
+                    onClick={() => {
+                      setSelectedWarranty(selectedWarrantyDetails);
+                      setIsModal('warranty_log');
+                    }}
+                    className="btn-primary" 
+                    style={{padding: '6px 12px', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: 4}}
+                  >
+                    <Plus size={12}/> Ghi sự cố mới
+                  </button>
+                </div>
+                
+                {(!selectedWarrantyDetails.issuesLog || selectedWarrantyDetails.issuesLog.length === 0) ? (
+                  <div style={{color: '#64748b', fontSize: '0.85rem', fontStyle: 'italic', textAlign:'center', marginTop: 20}}>Chưa ghi nhận sự cố nào cho thiết bị này.</div>
+                ) : (
+                  <div style={{display: 'flex', flexDirection: 'column', gap: '12px'}}>
+                    {selectedWarrantyDetails.issuesLog.map((log, idx) => (
+                      <div key={idx} style={{background: 'rgba(255,255,255,0.03)', padding: '15px', borderRadius: '16px', border: '1px solid var(--border-color)'}}>
+                        <div style={{fontSize: '0.75rem', color: '#64748b', display: 'flex', justifyContent: 'space-between', marginBottom: '8px'}}>
+                          <span style={{fontWeight:'bold', color:'#38bdf8'}}>Lần {idx + 1}</span>
+                          <span>{new Date(log.date).toLocaleDateString('vi-VN')}</span>
+                        </div>
+                        <div style={{fontSize: '0.9rem', color: '#e2e8f0', marginBottom: '6px'}}>
+                          <strong>Sự cố:</strong> {log.issue}
+                        </div>
+                        {log.resolution && (
+                          <div style={{fontSize: '0.85rem', color: '#10b981'}}>
+                            <strong>Cách xử lý:</strong> {log.resolution}
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
