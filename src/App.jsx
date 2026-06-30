@@ -326,79 +326,81 @@ const Dashboard = ({ customers, deals, orders, onSelectCustomer, lang, user }) =
   return (
     <div className="animate-in">
       {/* Date Filter Panel */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        background: 'rgba(30, 41, 59, 0.4)',
-        border: '1px solid rgba(255, 255, 255, 0.05)',
-        padding: '12px 20px',
-        borderRadius: '16px',
-        marginBottom: '20px',
-        flexWrap: 'wrap',
-        gap: '15px'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: 'bold' }}>Bộ lọc thời gian:</span>
-          <select 
-            value={filterType} 
-            onChange={(e) => setFilterType(e.target.value)}
-            style={{
-              padding: '8px 12px',
-              borderRadius: '8px',
-              background: '#0f172a',
-              border: '1px solid var(--border-color)',
-              color: 'white',
-              fontSize: '0.85rem',
-              cursor: 'pointer'
-            }}
-          >
-            <option value="all">Tất cả thời gian</option>
-            <option value="today">Hôm nay</option>
-            <option value="yesterday">Hôm qua</option>
-            <option value="7days">7 ngày qua</option>
-            <option value="thisMonth">Tháng này</option>
-            <option value="custom">Tùy chỉnh khoảng ngày</option>
-          </select>
-        </div>
-
-        {filterType === 'custom' && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }} className="animate-in">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-              <span style={{ color: '#64748b', fontSize: '0.8rem' }}>Từ:</span>
-              <input 
-                type="date" 
-                value={customStart} 
-                onChange={(e) => setCustomStart(e.target.value)}
-                style={{
-                  padding: '6px 10px',
-                  borderRadius: '8px',
-                  background: '#0f172a',
-                  border: '1px solid var(--border-color)',
-                  color: 'white',
-                  fontSize: '0.85rem'
-                }}
-              />
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-              <span style={{ color: '#64748b', fontSize: '0.8rem' }}>Đến:</span>
-              <input 
-                type="date" 
-                value={customEnd} 
-                onChange={(e) => setCustomEnd(e.target.value)}
-                style={{
-                  padding: '6px 10px',
-                  borderRadius: '8px',
-                  background: '#0f172a',
-                  border: '1px solid var(--border-color)',
-                  color: 'white',
-                  fontSize: '0.85rem'
-                }}
-              />
-            </div>
+      {user?.role !== 'staff' && (
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          background: 'rgba(30, 41, 59, 0.4)',
+          border: '1px solid rgba(255, 255, 255, 0.05)',
+          padding: '12px 20px',
+          borderRadius: '16px',
+          marginBottom: '20px',
+          flexWrap: 'wrap',
+          gap: '15px'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: 'bold' }}>Bộ lọc thời gian:</span>
+            <select 
+              value={filterType} 
+              onChange={(e) => setFilterType(e.target.value)}
+              style={{
+                padding: '8px 12px',
+                borderRadius: '8px',
+                background: '#0f172a',
+                border: '1px solid var(--border-color)',
+                color: 'white',
+                fontSize: '0.85rem',
+                cursor: 'pointer'
+              }}
+            >
+              <option value="all">Tất cả thời gian</option>
+              <option value="today">Hôm nay</option>
+              <option value="yesterday">Hôm qua</option>
+              <option value="7days">7 ngày qua</option>
+              <option value="thisMonth">Tháng này</option>
+              <option value="custom">Tùy chỉnh khoảng ngày</option>
+            </select>
           </div>
-        )}
-      </div>
+
+          {filterType === 'custom' && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }} className="animate-in">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <span style={{ color: '#64748b', fontSize: '0.8rem' }}>Từ:</span>
+                <input 
+                  type="date" 
+                  value={customStart} 
+                  onChange={(e) => setCustomStart(e.target.value)}
+                  style={{
+                    padding: '6px 10px',
+                    borderRadius: '8px',
+                    background: '#0f172a',
+                    border: '1px solid var(--border-color)',
+                    color: 'white',
+                    fontSize: '0.85rem'
+                  }}
+                />
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <span style={{ color: '#64748b', fontSize: '0.8rem' }}>Đến:</span>
+                <input 
+                  type="date" 
+                  value={customEnd} 
+                  onChange={(e) => setCustomEnd(e.target.value)}
+                  style={{
+                    padding: '6px 10px',
+                    borderRadius: '8px',
+                    background: '#0f172a',
+                    border: '1px solid var(--border-color)',
+                    color: 'white',
+                    fontSize: '0.85rem'
+                  }}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="dashboard-grid">
         {(user?.role === 'admin' || user?.role === 'accountant') && (
