@@ -509,8 +509,8 @@ const Orders = ({ orders, onViewInvoice, onDeleteOrder, onUpdateOrderStatus, onC
         </thead>
         <tbody>
           {orders.map(o=>{
-            const paid = o.paidAmount || 0;
-            const debt = Math.max(0, o.totalAmount - paid);
+            const paid = o.status === 'Paid' ? o.totalAmount : (o.paidAmount || 0);
+            const debt = o.status === 'Paid' ? 0 : Math.max(0, o.totalAmount - paid);
             return (
               <tr key={o._id}>
                 <td>
@@ -1086,6 +1086,9 @@ const InvoicePrintView = ({ order, onCancel }) => {
   if (!order) return null;
   const today = new Date(order.createdAt);
   const dateStr = `Ngày ${today.getDate()} tháng ${today.getMonth()+1} năm ${today.getFullYear()}`;
+  const isFullyPaid = order.status === 'Paid' || (order.paidAmount >= order.totalAmount);
+  const paid = order.status === 'Paid' ? order.totalAmount : (order.paidAmount || 0);
+  const debt = order.status === 'Paid' ? 0 : Math.max(0, order.totalAmount - paid);
   
   return (
     <div className="print-view-overlay" style={{position:'fixed', inset:0, background:'#e2e8f0', zIndex:9999, overflowY:'auto', display:'flex', flexDirection:'column', alignItems:'center', padding:'40px 20px'}}>
@@ -1119,7 +1122,7 @@ const InvoicePrintView = ({ order, onCancel }) => {
           <p style={{margin:'0 0 8px 0'}}><strong>Khách hàng:</strong> {order.customerId?.name || 'N/A'}</p>
           {order.customerId?.phone && <p style={{margin:'0 0 8px 0'}}><strong>Số điện thoại:</strong> {order.customerId.phone}</p>}
           <p style={{margin:'0 0 8px 0'}}><strong>Hạng mục / Công trình:</strong> {order.dealId?.title || 'Đơn hàng lẻ'}</p>
-          <p style={{margin:0}}><strong>Trạng thái giao dịch:</strong> <span style={{color: (order.paidAmount >= order.totalAmount) ? '#10b981' : '#ef4444', fontWeight:'bold'}}>{(order.paidAmount >= order.totalAmount) ? 'ĐÃ THANH TOÁN XONG (PAID)' : `CÒN NỢ (OUTSTANDING DEBT: ${(order.totalAmount - (order.paidAmount || 0)).toLocaleString('vi-VN')} đ)`}</span></p>
+          <p style={{margin:0}}><strong>Trạng thái giao dịch:</strong> <span style={{color: isFullyPaid ? '#10b981' : '#ef4444', fontWeight:'bold'}}>{isFullyPaid ? 'ĐÃ THANH TOÁN XONG (PAID)' : `CÒN NỢ (OUTSTANDING DEBT: ${debt.toLocaleString('vi-VN')} đ)`}</span></p>
         </div>
 
         {/* Table */}
@@ -1166,11 +1169,11 @@ const InvoicePrintView = ({ order, onCancel }) => {
             </tr>
             <tr style={{background:'#f8fafc', fontWeight:'bold'}}>
               <td colSpan={4} style={{padding:10, border:'1px solid #cbd5e1', textAlign:'right', textTransform:'uppercase'}}>Đã thanh toán (lũy kế)</td>
-              <td style={{padding:10, border:'1px solid #cbd5e1', textAlign:'right', color:'#10b981', fontSize:'1rem'}}>{(order.paidAmount || 0).toLocaleString('vi-VN')} đ</td>
+              <td style={{padding:10, border:'1px solid #cbd5e1', textAlign:'right', color:'#10b981', fontSize:'1rem'}}>{paid.toLocaleString('vi-VN')} đ</td>
             </tr>
             <tr style={{background:'#f0fdf4', fontWeight:'bold'}}>
               <td colSpan={4} style={{padding:10, border:'1px solid #cbd5e1', textAlign:'right', textTransform:'uppercase'}}>Số tiền còn lại (công nợ)</td>
-              <td style={{padding:10, border:'1px solid #cbd5e1', textAlign:'right', color: (order.totalAmount - (order.paidAmount || 0)) > 0 ? '#ef4444' : '#64748b', fontSize:'1.1rem'}}>{Math.max(0, order.totalAmount - (order.paidAmount || 0)).toLocaleString('vi-VN')} đ</td>
+              <td style={{padding:10, border:'1px solid #cbd5e1', textAlign:'right', color: debt > 0 ? '#ef4444' : '#64748b', fontSize:'1.1rem'}}>{debt.toLocaleString('vi-VN')} đ</td>
             </tr>
           </tfoot>
         </table>
@@ -1179,8 +1182,8 @@ const InvoicePrintView = ({ order, onCancel }) => {
         <div style={{marginBottom:50}}>
           <p style={{fontWeight:'bold', textDecoration:'underline'}}>Ghi chú chuyển khoản / thanh toán:</p>
           <ul style={{margin:0, paddingLeft:20, color:'#475569', fontSize:'0.9rem'}}>
-            <li style={{marginBottom:5}}>Số tiền đã thu lũy kế: <strong>{(order.paidAmount || 0).toLocaleString('vi-VN')} đ</strong>.</li>
-            <li style={{marginBottom:5}}>Số tiền còn lại (nợ công nợ): <strong>{Math.max(0, order.totalAmount - (order.paidAmount || 0)).toLocaleString('vi-VN')} đ</strong>.</li>
+            <li style={{marginBottom:5}}>Số tiền đã thu lũy kế: <strong>{paid.toLocaleString('vi-VN')} đ</strong>.</li>
+            <li style={{marginBottom:5}}>Số tiền còn lại (nợ công nợ): <strong>{debt.toLocaleString('vi-VN')} đ</strong>.</li>
             <li style={{marginBottom:5}}>Hình thức thanh toán: Tiền mặt / Chuyển khoản qua ngân hàng.</li>
             <li>Hóa đơn bán hàng kiêm biên nhận thanh toán hoàn thiện công trình.</li>
           </ul>
