@@ -232,10 +232,10 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, user, lang }) => {
   const t = translations[lang];
   const menuItems = [
     { id: 'dashboard', icon: LayoutDashboard, label: t.dashboard, key: '1' }, 
-    { id: 'customers', icon: Users, label: t.customers, key: '2' }, 
+    user?.role !== 'accountant' && { id: 'customers', icon: Users, label: t.customers, key: '2' }, 
     { id: 'deals', icon: Target, label: t.deals, key: '3' }, 
     { id: 'products', icon: FileSpreadsheet, label: t.products, key: '4' }, 
-    user?.role === 'admin' && { id: 'orders', icon: DollarSign, label: t.orders, key: '5' }, 
+    (user?.role === 'admin' || user?.role === 'accountant') && { id: 'orders', icon: DollarSign, label: t.orders, key: '5' }, 
     { id: 'warranties', icon: Shield, label: t.warranties, key: '6' }, 
     { id: 'schedule', icon: Calendar, label: t.schedule, key: '7' }, 
     { id: 'settings', icon: Settings, label: t.settings, key: '8' }
@@ -490,7 +490,7 @@ const Products = ({ products, onAddProduct, onEditProduct, onDeleteProduct }) =>
   </div>
 );
 
-const Orders = ({ orders, onViewInvoice, onDeleteOrder }) => (
+const Orders = ({ orders, onViewInvoice, onDeleteOrder, onUpdateOrderStatus, user }) => (
   <div className="animate-in">
     <header><h1>Lịch sử Đơn hàng</h1></header>
     <div className="section-card">
@@ -516,7 +516,21 @@ const Orders = ({ orders, onViewInvoice, onDeleteOrder }) => (
               <td>{o.customerId?.name || 'N/A'}</td>
               <td style={{fontWeight:'bold',color:'#10b981'}}>{(o.totalAmount||0).toLocaleString('vi-VN')} đ</td>
               <td>
-                <span className={`priority-badge priority-normal`}>{o.status === 'Paid' ? 'Đã thanh toán' : o.status}</span>
+                {(user?.role === 'admin' || user?.role === 'accountant') ? (
+                  <select 
+                    value={o.status} 
+                    onChange={(e) => onUpdateOrderStatus(o._id, e.target.value)}
+                    style={{ padding: '6px 10px', borderRadius: 8, background: '#0f172a', border: '1px solid var(--border-color)', color: 'white', fontSize: '0.8rem', cursor: 'pointer' }}
+                  >
+                    <option value="Paid">Đã thanh toán</option>
+                    <option value="Unpaid">Chờ thanh toán</option>
+                    <option value="Cancelled">Đã hủy</option>
+                  </select>
+                ) : (
+                  <span className={`priority-badge priority-${o.status === 'Paid' ? 'normal' : o.status === 'Unpaid' ? 'medium' : 'high'}`}>
+                    {o.status === 'Paid' ? 'Đã thanh toán' : o.status === 'Unpaid' ? 'Chờ thanh toán' : o.status === 'Cancelled' ? 'Đã hủy' : o.status}
+                  </span>
+                )}
               </td>
               <td>
                 <div style={{display:'flex', gap:'8px'}}>
@@ -720,7 +734,7 @@ const Schedule = ({ tasks, customers, onAddTask, onToggleTask, onDeleteTask, onE
   );
 };
 
-const SettingsView = ({ user, lang, setLang, onBackup, apiFetch }) => {
+const SettingsView = ({ user, lang, setLang, onBackup, onRestore, apiFetch }) => {
   const [users, setUsers] = useState([]);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -774,6 +788,24 @@ const SettingsView = ({ user, lang, setLang, onBackup, apiFetch }) => {
     }
   };
 
+  const handleResetPassword = async (id, userName) => {
+    const newPass = window.prompt(`Nhập mật khẩu mới cho tài khoản "${userName}":`);
+    if (newPass === null) return;
+    if (!newPass.trim()) {
+      alert('Mật khẩu không được để trống!');
+      return;
+    }
+    try {
+      await apiFetch(`/api/users/${id}/password`, {
+        method: 'PUT',
+        body: JSON.stringify({ password: newPass })
+      });
+      alert(`Đã đổi mật khẩu cho tài khoản "${userName}" thành công!`);
+    } catch (err) {
+      alert('Lỗi đổi mật khẩu: ' + err.message);
+    }
+  };
+
   return (
     <div className="animate-in">
       <header><h1>Cài đặt hệ thống</h1></header>
@@ -788,10 +820,17 @@ const SettingsView = ({ user, lang, setLang, onBackup, apiFetch }) => {
           </div>
           <div className="section-card">
             <h3>Dữ liệu</h3>
-            <p style={{fontSize:'0.8rem',color:'var(--text-secondary)',marginBottom:15}}>Xuất toàn bộ dữ liệu ra file JSON để sao lưu.</p>
-            <button onClick={onBackup} className="btn-primary" style={{background:'rgba(255,255,255,0.05)',border:'1px solid var(--border-color)',color:'white'}}>
-              <CloudDownload size={18} style={{marginRight:8}}/> Sao lưu ngay
-            </button>
+            <p style={{fontSize:'0.8rem',color:'var(--text-secondary)',marginBottom:15}}>Xuất/Nhập dữ liệu bằng file JSON để sao lưu và khôi phục.</p>
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+              <button onClick={onBackup} className="btn-primary" style={{background:'rgba(255,255,255,0.05)',border:'1px solid var(--border-color)',color:'white'}}>
+                <CloudDownload size={18} style={{marginRight:8}}/> Sao lưu
+              </button>
+              {user?.role === 'admin' && (
+                <button onClick={onRestore} className="btn-primary" style={{background:'rgba(99,102,241,0.1)',border:'1px solid #6366f1',color:'#a5b4fc'}}>
+                  <CloudDownload size={18} style={{marginRight:8, transform: 'rotate(180deg)'}}/> Khôi phục
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -831,6 +870,7 @@ const SettingsView = ({ user, lang, setLang, onBackup, apiFetch }) => {
                   style={{ padding: 12, borderRadius: 12, background: '#0f172a', border: '1px solid var(--border-color)', color: 'white' }}
                 >
                   <option value="staff">Quyền: Nhân viên (staff)</option>
+                  <option value="accountant">Quyền: Kế toán (accountant)</option>
                   <option value="admin">Quyền: Boss / Admin (admin)</option>
                 </select>
                 {error && <div style={{ color: '#ef4444', fontSize: '0.8rem' }}>{error}</div>}
@@ -863,16 +903,24 @@ const SettingsView = ({ user, lang, setLang, onBackup, apiFetch }) => {
                           </span>
                         </td>
                         <td>
-                          {u._id !== user.id ? (
+                          <div style={{ display: 'flex', gap: '8px' }}>
                             <button 
-                              onClick={() => handleDeleteUser(u._id)}
-                              style={{ background: 'rgba(239,68,68,0.2)', border: 'none', color: '#ef4444', padding: '4px 8px', borderRadius: 6, cursor: 'pointer', fontSize: '0.75rem' }}
+                              onClick={() => handleResetPassword(u._id, u.name)}
+                              style={{ background: 'rgba(99,102,241,0.2)', border: 'none', color: '#6366f1', padding: '4px 8px', borderRadius: 6, cursor: 'pointer', fontSize: '0.75rem' }}
                             >
-                              Xóa
+                              Đổi MK
                             </button>
-                          ) : (
-                            <span style={{ fontSize: '0.75rem', opacity: 0.4 }}>Đang dùng</span>
-                          )}
+                            {u._id !== user.id ? (
+                              <button 
+                                onClick={() => handleDeleteUser(u._id)}
+                                style={{ background: 'rgba(239,68,68,0.2)', border: 'none', color: '#ef4444', padding: '4px 8px', borderRadius: 6, cursor: 'pointer', fontSize: '0.75rem' }}
+                              >
+                                Xóa
+                              </button>
+                            ) : (
+                              <span style={{ fontSize: '0.75rem', opacity: 0.4 }}>Đang dùng</span>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -1228,11 +1276,11 @@ function App() {
     if (!user) return; 
     try {
       const [c, d, n, p, o, w, t] = await Promise.all([
-        apiFetch('/api/customers'), 
+        user.role !== 'accountant' ? apiFetch('/api/customers') : Promise.resolve([]), 
         apiFetch('/api/deals'), 
         apiFetch('/api/notifications'), 
         apiFetch('/api/products'), 
-        apiFetch('/api/orders'), 
+        (user.role === 'admin' || user.role === 'accountant') ? apiFetch('/api/orders') : Promise.resolve([]), 
         apiFetch('/api/warranties'),
         apiFetch('/api/tasks')
       ]);
@@ -1361,22 +1409,60 @@ function App() {
     const handleKeyDown = (e) => {
       if (e.altKey) {
         if (e.key === '1') setTab('dashboard');
-        if (e.key === '2') setTab('customers');
+        if (e.key === '2' && user?.role !== 'accountant') setTab('customers');
         if (e.key === '3') setTab('deals');
         if (e.key === '4') setTab('products');
-        if (e.key === '5' && user?.role === 'admin') setTab('orders');
+        if (e.key === '5' && (user?.role === 'admin' || user?.role === 'accountant')) setTab('orders');
         if (e.key === '6') setTab('warranties');
         if (e.key === '7') setTab('schedule');
         if (e.key === '8') setTab('settings');
-        if (e.key === 'n') setIsModal('customer');
+        if (e.key === 'n' && user?.role !== 'accountant') setIsModal('customer');
         if (e.key === 's') { e.preventDefault(); searchRef.current?.focus(); }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [user]);
 
   const handleBackup = () => { const data = { customers, deals, products, orders, timestamp: new Date() }; const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = `crm_backup_${new Date().toLocaleDateString()}.json`; link.click(); };
+
+  const handleRestore = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        try {
+          const data = JSON.parse(event.target.result);
+          if (!data.customers || !data.deals || !data.products || !data.orders) {
+            alert('Lỗi: Định dạng file sao lưu không hợp lệ!');
+            return;
+          }
+          
+          if (window.confirm('CẢNH BÁO: Hành động này sẽ XÓA TOÀN BỘ dữ liệu hiện tại (Khách hàng, Sản phẩm, Công trình, Đơn hàng) và khôi phục từ file sao lưu. Bạn có chắc chắn muốn tiếp tục?')) {
+            const res = await apiFetch('/api/backup/restore', {
+              method: 'POST',
+              body: JSON.stringify(data)
+            });
+            if (res.success) {
+              alert('Đã khôi phục dữ liệu hệ thống thành công!');
+              fetchData();
+            } else {
+              alert('Lỗi khôi phục: ' + res.message);
+            }
+          }
+        } catch (err) {
+          alert('Lỗi đọc file: ' + err.message);
+        }
+      };
+      reader.readAsText(file);
+    };
+    input.click();
+  };
 
   if (!user) return <div style={{height:'100vh',display:'flex',alignItems:'center',justifyContent:'center',background:'var(--bg-color)'}}><div style={{width:350,padding:'3rem',background:'var(--surface-color)',borderRadius:32,border:'1px solid var(--border-color)'}}><h2 style={{textAlign:'center',marginBottom:20}}>Cửa Tự Động Boss</h2><form onSubmit={async e=>{e.preventDefault(); const fd=new FormData(e.target); const res=await fetch(`${API_BASE_URL}/api/auth/login`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.fromEntries(fd))}); const data=await res.json(); if(res.ok){ const fullUser = {...data.user, token: data.token}; setUser(fullUser); localStorage.setItem('crm_user',JSON.stringify(fullUser));}}} style={{display:'flex',flexDirection:'column',gap:15}}><input name="email" defaultValue="admin@bossdoor.vn" style={{padding:15,borderRadius:12,background:'rgba(255,255,255,0.05)',border:'1px solid var(--border-color)',color:'white'}}/><input name="password" type="password" defaultValue="admin123" style={{padding:15,borderRadius:12,background:'rgba(255,255,255,0.05)',border:'1px solid var(--border-color)',color:'white'}}/><button type="submit" className="btn-primary" style={{padding:15}}>Login</button></form></div></div>;
 
@@ -1387,7 +1473,7 @@ function App() {
         <Header onSearch={setSearch} unreadCount={notifs.filter(n=>!n.isRead).length} searchRef={searchRef} user={user} onLogout={()=>{setUser(null);localStorage.removeItem('crm_user');}} />
         <AnimatePresence mode="wait">
           {tab === 'dashboard' && <Dashboard customers={customers} deals={deals.filter(d=>!d.isArchived)} onSelectCustomer={setSelectedCust} lang={lang} user={user} />}
-          {tab === 'customers' && (
+          {tab === 'customers' && user?.role !== 'accountant' && (
             <div className="animate-in">
               <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 15 }}>
                 <h1>Khách hàng</h1>
@@ -1465,7 +1551,7 @@ function App() {
           )}
           {tab === 'deals' && <Pipeline deals={deals.filter(d=>!d.isArchived)} onUpdateDeal={(id,u)=>{apiFetch(`/api/deals/${id}`,{method:'PUT',body:JSON.stringify(u)}).then(fetchData);}} onAddDeal={()=>setIsModal('deal')} onPrint={(d)=>setPrintDeal(d)} onArchiveDeal={handleCloseDeal} user={user} />}
           {tab === 'products' && <Products products={filteredProducts} onAddProduct={()=>{setSelectedProduct(null);setIsModal('product');}} onEditProduct={(p)=>{setSelectedProduct(p);setIsModal('product');}} onDeleteProduct={async (id)=>{if(window.confirm('Xóa sản phẩm này?')){await apiFetch(`/api/products/${id}`,{method:'DELETE'});fetchData();}}} />}
-          {tab === 'orders' && user?.role === 'admin' && (
+          {tab === 'orders' && (user?.role === 'admin' || user?.role === 'accountant') && (
             <Orders 
               orders={orders} 
               onViewInvoice={(o) => setPrintInvoice(o)} 
@@ -1475,6 +1561,18 @@ function App() {
                   fetchData();
                 }
               }} 
+              onUpdateOrderStatus={async (id, status)=>{
+                try {
+                  await apiFetch(`/api/orders/${id}/status`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ status })
+                  });
+                  fetchData();
+                } catch (e) {
+                  alert('Lỗi cập nhật trạng thái: ' + e.message);
+                }
+              }}
+              user={user}
             />
           )}
           {tab === 'warranties' && <Warranties warranties={warranties} onAddWarranty={()=>setIsModal('warranty')} onViewWarranty={(w)=>{setSelectedWarranty(w); setIsModal('warranty_log');}} />}
@@ -1488,7 +1586,7 @@ function App() {
               onExecuteCampaign={(campaign) => setExecutingCampaign(campaign)}
             />
           )}
-          {tab === 'settings' && <SettingsView user={user} lang={lang} setLang={setLang} onBackup={handleBackup} apiFetch={apiFetch} />}
+          {tab === 'settings' && <SettingsView user={user} lang={lang} setLang={setLang} onBackup={handleBackup} onRestore={handleRestore} apiFetch={apiFetch} />}
         </AnimatePresence>
         <div className="system-status">
           <div>
