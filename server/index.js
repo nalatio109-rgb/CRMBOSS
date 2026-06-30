@@ -420,18 +420,29 @@ app.delete('/api/orders/:id', auth, async (req, res) => {
   } catch (err) { res.status(400).json({ message: err.message }); }
 });
 
-app.put('/api/orders/:id/status', auth, async (req, res) => {
+app.put('/api/orders/:id', auth, async (req, res) => {
   if (req.user && req.user.role !== 'admin' && req.user.role !== 'accountant') {
-    return res.status(403).json({ message: 'Access denied: Only Boss and Accountant can update order status' });
+    return res.status(403).json({ message: 'Access denied: Only Boss and Accountant can update orders' });
   }
   try {
-    const { status } = req.body;
-    const order = await Order.findByIdAndUpdate(req.params.id, { status }, { new: true });
+    const { status, paidAmount } = req.body;
+    const updateData = {};
+    if (status !== undefined) updateData.status = status;
+    if (paidAmount !== undefined) updateData.paidAmount = paidAmount;
+
+    const order = await Order.findByIdAndUpdate(req.params.id, updateData, { new: true });
     
     // Log an activity or notification
+    let msg = `Đơn hàng #${order._id.toString().slice(-6).toUpperCase()} đã được cập nhật.`;
+    if (paidAmount !== undefined) {
+      msg = `Đơn hàng #${order._id.toString().slice(-6).toUpperCase()}: Đã thu thêm tiền, tổng lũy kế đã trả: ${(order.paidAmount || 0).toLocaleString('vi-VN')} đ / ${(order.totalAmount || 0).toLocaleString('vi-VN')} đ (Còn nợ: ${Math.max(0, order.totalAmount - (order.paidAmount || 0)).toLocaleString('vi-VN')} đ).`;
+    } else if (status !== undefined) {
+      msg = `Đơn hàng #${order._id.toString().slice(-6).toUpperCase()} chuyển sang trạng thái "${status === 'Paid' ? 'Đã thanh toán' : status === 'Unpaid' ? 'Chờ thanh toán' : status === 'Cancelled' ? 'Đã hủy' : status}".`;
+    }
+
     await new Notification({
-      title: 'Cập nhật trạng thái đơn hàng',
-      message: `Đơn hàng #${order._id.toString().slice(-6).toUpperCase()} chuyển sang trạng thái "${status === 'Paid' ? 'Đã thanh toán' : status === 'Unpaid' ? 'Chờ thanh toán' : status}".`,
+      title: 'Cập nhật đơn hàng',
+      message: msg,
       type: 'info'
     }).save();
     

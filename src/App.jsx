@@ -490,7 +490,7 @@ const Products = ({ products, onAddProduct, onEditProduct, onDeleteProduct }) =>
   </div>
 );
 
-const Orders = ({ orders, onViewInvoice, onDeleteOrder, onUpdateOrderStatus, user }) => (
+const Orders = ({ orders, onViewInvoice, onDeleteOrder, onUpdateOrderStatus, onCollectPayment, user }) => (
   <div className="animate-in">
     <header><h1>Lịch sử Đơn hàng</h1></header>
     <div className="section-card">
@@ -501,45 +501,58 @@ const Orders = ({ orders, onViewInvoice, onDeleteOrder, onUpdateOrderStatus, use
             <th>Tên Công trình</th>
             <th>Khách hàng</th>
             <th>Tổng tiền</th>
+            <th>Đã trả</th>
+            <th>Còn nợ</th>
             <th>Trạng thái</th>
             <th>Hành động</th>
           </tr>
         </thead>
         <tbody>
-          {orders.map(o=>(
-            <tr key={o._id}>
-              <td>
-                <div style={{fontWeight:'bold',color:'#6366f1'}}>#{o._id.slice(-6).toUpperCase()}</div>
-                <div style={{fontSize:'0.8rem',color:'#64748b'}}>{new Date(o.createdAt).toLocaleDateString('vi-VN')}</div>
-              </td>
-              <td>{o.dealId?.title || 'Đơn hàng lẻ'}</td>
-              <td>{o.customerId?.name || 'N/A'}</td>
-              <td style={{fontWeight:'bold',color:'#10b981'}}>{(o.totalAmount||0).toLocaleString('vi-VN')} đ</td>
-              <td>
-                {(user?.role === 'admin' || user?.role === 'accountant') ? (
-                  <select 
-                    value={o.status} 
-                    onChange={(e) => onUpdateOrderStatus(o._id, e.target.value)}
-                    style={{ padding: '6px 10px', borderRadius: 8, background: '#0f172a', border: '1px solid var(--border-color)', color: 'white', fontSize: '0.8rem', cursor: 'pointer' }}
-                  >
-                    <option value="Paid" style={{ color: 'white', background: '#0f172a' }}>Đã thanh toán</option>
-                    <option value="Unpaid" style={{ color: 'white', background: '#0f172a' }}>Chờ thanh toán</option>
-                    <option value="Cancelled" style={{ color: 'white', background: '#0f172a' }}>Đã hủy</option>
-                  </select>
-                ) : (
-                  <span className={`priority-badge priority-${o.status === 'Paid' ? 'normal' : o.status === 'Unpaid' ? 'medium' : 'high'}`}>
-                    {o.status === 'Paid' ? 'Đã thanh toán' : o.status === 'Unpaid' ? 'Chờ thanh toán' : o.status === 'Cancelled' ? 'Đã hủy' : o.status}
-                  </span>
-                )}
-              </td>
-              <td>
-                <div style={{display:'flex', gap:'8px'}}>
-                  <button onClick={()=>onViewInvoice(o)} style={{background:'rgba(16,185,129,0.2)',border:'none',color:'#10b981',padding:'4px 8px',borderRadius:6,cursor:'pointer'}}>Xem hóa đơn</button>
-                  <button onClick={()=>onDeleteOrder(o._id)} style={{background:'rgba(239,68,68,0.2)',border:'none',color:'#ef4444',padding:'4px 8px',borderRadius:6,cursor:'pointer'}}>Xóa</button>
-                </div>
-              </td>
-            </tr>
-          ))}
+          {orders.map(o=>{
+            const paid = o.paidAmount || 0;
+            const debt = Math.max(0, o.totalAmount - paid);
+            return (
+              <tr key={o._id}>
+                <td>
+                  <div style={{fontWeight:'bold',color:'#6366f1'}}>#{o._id.slice(-6).toUpperCase()}</div>
+                  <div style={{fontSize:'0.8rem',color:'#64748b'}}>{new Date(o.createdAt).toLocaleDateString('vi-VN')}</div>
+                </td>
+                <td>{o.dealId?.title || 'Đơn hàng lẻ'}</td>
+                <td>{o.customerId?.name || 'N/A'}</td>
+                <td style={{fontWeight:'bold',color:'white'}}>{(o.totalAmount||0).toLocaleString('vi-VN')} đ</td>
+                <td style={{fontWeight:'bold',color:'#10b981'}}>{paid.toLocaleString('vi-VN')} đ</td>
+                <td style={{fontWeight:'bold',color:debt > 0 ? '#ef4444' : '#64748b'}}>{debt.toLocaleString('vi-VN')} đ</td>
+                <td>
+                  {(user?.role === 'admin' || user?.role === 'accountant') ? (
+                    <select 
+                      value={o.status} 
+                      onChange={(e) => onUpdateOrderStatus(o._id, e.target.value)}
+                      style={{ padding: '6px 10px', borderRadius: 8, background: '#0f172a', border: '1px solid var(--border-color)', color: 'white', fontSize: '0.8rem', cursor: 'pointer' }}
+                    >
+                      <option value="Paid" style={{ color: 'white', background: '#0f172a' }}>Đã thanh toán</option>
+                      <option value="Unpaid" style={{ color: 'white', background: '#0f172a' }}>Chờ thanh toán</option>
+                      <option value="Cancelled" style={{ color: 'white', background: '#0f172a' }}>Đã hủy</option>
+                    </select>
+                  ) : (
+                    <span className={`priority-badge priority-${o.status === 'Paid' ? 'normal' : o.status === 'Unpaid' ? 'medium' : 'high'}`}>
+                      {o.status === 'Paid' ? 'Đã thanh toán' : o.status === 'Unpaid' ? 'Chờ thanh toán' : o.status === 'Cancelled' ? 'Đã hủy' : o.status}
+                    </span>
+                  )}
+                </td>
+                <td>
+                  <div style={{display:'flex', gap:'8px', flexWrap:'wrap'}}>
+                    <button onClick={()=>onViewInvoice(o)} style={{background:'rgba(16,185,129,0.2)',border:'none',color:'#10b981',padding:'4px 8px',borderRadius:6,cursor:'pointer'}}>Xem hóa đơn</button>
+                    {(user?.role === 'admin' || user?.role === 'accountant') && debt > 0 && (
+                      <button onClick={()=>onCollectPayment(o)} style={{background:'rgba(99,102,241,0.2)',border:'none',color:'#a5b4fc',padding:'4px 8px',borderRadius:6,cursor:'pointer'}}>Thu tiền</button>
+                    )}
+                    {(user?.role === 'admin' || user?.role === 'accountant') && (
+                      <button onClick={()=>onDeleteOrder(o._id)} style={{background:'rgba(239,68,68,0.2)',border:'none',color:'#ef4444',padding:'4px 8px',borderRadius:6,cursor:'pointer'}}>Xóa</button>
+                    )}
+                  </div>
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>
@@ -1106,7 +1119,7 @@ const InvoicePrintView = ({ order, onCancel }) => {
           <p style={{margin:'0 0 8px 0'}}><strong>Khách hàng:</strong> {order.customerId?.name || 'N/A'}</p>
           {order.customerId?.phone && <p style={{margin:'0 0 8px 0'}}><strong>Số điện thoại:</strong> {order.customerId.phone}</p>}
           <p style={{margin:'0 0 8px 0'}}><strong>Hạng mục / Công trình:</strong> {order.dealId?.title || 'Đơn hàng lẻ'}</p>
-          <p style={{margin:0}}><strong>Trạng thái giao dịch:</strong> <span style={{color:'#10b981', fontWeight:'bold'}}>ĐÃ THANH TOÁN (PAID)</span></p>
+          <p style={{margin:0}}><strong>Trạng thái giao dịch:</strong> <span style={{color: (order.paidAmount >= order.totalAmount) ? '#10b981' : '#ef4444', fontWeight:'bold'}}>{(order.paidAmount >= order.totalAmount) ? 'ĐÃ THANH TOÁN XONG (PAID)' : `CÒN NỢ (OUTSTANDING DEBT: ${(order.totalAmount - (order.paidAmount || 0)).toLocaleString('vi-VN')} đ)`}</span></p>
         </div>
 
         {/* Table */}
@@ -1148,8 +1161,16 @@ const InvoicePrintView = ({ order, onCancel }) => {
           </tbody>
           <tfoot>
             <tr style={{background:'#f8fafc', fontWeight:'bold'}}>
-              <td colSpan={4} style={{padding:12, border:'1px solid #cbd5e1', textAlign:'right', textTransform:'uppercase'}}>Tổng số tiền thanh toán</td>
-              <td style={{padding:12, border:'1px solid #cbd5e1', textAlign:'right', color:'#10b981', fontSize:'1.1rem'}}>{order.totalAmount.toLocaleString('vi-VN')} đ</td>
+              <td colSpan={4} style={{padding:10, border:'1px solid #cbd5e1', textAlign:'right', textTransform:'uppercase'}}>Tổng giá trị hợp đồng / đơn hàng</td>
+              <td style={{padding:10, border:'1px solid #cbd5e1', textAlign:'right', fontSize:'1rem'}}>{order.totalAmount.toLocaleString('vi-VN')} đ</td>
+            </tr>
+            <tr style={{background:'#f8fafc', fontWeight:'bold'}}>
+              <td colSpan={4} style={{padding:10, border:'1px solid #cbd5e1', textAlign:'right', textTransform:'uppercase'}}>Đã thanh toán (lũy kế)</td>
+              <td style={{padding:10, border:'1px solid #cbd5e1', textAlign:'right', color:'#10b981', fontSize:'1rem'}}>{(order.paidAmount || 0).toLocaleString('vi-VN')} đ</td>
+            </tr>
+            <tr style={{background:'#f0fdf4', fontWeight:'bold'}}>
+              <td colSpan={4} style={{padding:10, border:'1px solid #cbd5e1', textAlign:'right', textTransform:'uppercase'}}>Số tiền còn lại (công nợ)</td>
+              <td style={{padding:10, border:'1px solid #cbd5e1', textAlign:'right', color: (order.totalAmount - (order.paidAmount || 0)) > 0 ? '#ef4444' : '#64748b', fontSize:'1.1rem'}}>{Math.max(0, order.totalAmount - (order.paidAmount || 0)).toLocaleString('vi-VN')} đ</td>
             </tr>
           </tfoot>
         </table>
@@ -1158,7 +1179,8 @@ const InvoicePrintView = ({ order, onCancel }) => {
         <div style={{marginBottom:50}}>
           <p style={{fontWeight:'bold', textDecoration:'underline'}}>Ghi chú chuyển khoản / thanh toán:</p>
           <ul style={{margin:0, paddingLeft:20, color:'#475569', fontSize:'0.9rem'}}>
-            <li style={{marginBottom:5}}>Đã thu đủ số tiền: <strong>{order.totalAmount.toLocaleString('vi-VN')} đ</strong>.</li>
+            <li style={{marginBottom:5}}>Số tiền đã thu lũy kế: <strong>{(order.paidAmount || 0).toLocaleString('vi-VN')} đ</strong>.</li>
+            <li style={{marginBottom:5}}>Số tiền còn lại (nợ công nợ): <strong>{Math.max(0, order.totalAmount - (order.paidAmount || 0)).toLocaleString('vi-VN')} đ</strong>.</li>
             <li style={{marginBottom:5}}>Hình thức thanh toán: Tiền mặt / Chuyển khoản qua ngân hàng.</li>
             <li>Hóa đơn bán hàng kiêm biên nhận thanh toán hoàn thiện công trình.</li>
           </ul>
@@ -1388,12 +1410,15 @@ function App() {
       const matchedCustomer = customers.find(c => c.name === deal.customer);
       const customerId = matchedCustomer ? matchedCustomer._id : null;
       if (customerId) {
+        const total = parseInt(String(deal.value || '').replace(/\D/g,'') || 0);
+        const paid = deal.paidAmount || 0;
         await apiFetch('/api/orders', { method: 'POST', body: JSON.stringify({
           customerId,
           dealId: deal._id,
-          totalAmount: parseInt(String(deal.value || '').replace(/\D/g,'') || 0),
-          status: 'Paid',
-          items: deal.product ? [{ productId: deal.product._id || deal.product, quantity: 1, price: parseInt(String(deal.value || '').replace(/\D/g,'') || 0) }] : []
+          totalAmount: total,
+          paidAmount: paid,
+          status: (paid >= total) ? 'Paid' : 'Unpaid',
+          items: deal.product ? [{ productId: deal.product._id || deal.product, quantity: 1, price: total }] : []
         })});
       }
       await apiFetch(`/api/deals/${deal._id}`, { method: 'PUT', body: JSON.stringify({ isArchived: true }) });
@@ -1563,13 +1588,35 @@ function App() {
               }} 
               onUpdateOrderStatus={async (id, status)=>{
                 try {
-                  await apiFetch(`/api/orders/${id}/status`, {
+                  await apiFetch(`/api/orders/${id}`, {
                     method: 'PUT',
                     body: JSON.stringify({ status })
                   });
                   fetchData();
                 } catch (e) {
                   alert('Lỗi cập nhật trạng thái: ' + e.message);
+                }
+              }}
+              onCollectPayment={async (o) => {
+                const amount = prompt(`Nhập TỔNG SỐ TIỀN đã thu lũy kế của đơn hàng này từ trước đến nay (Tổng cộng đơn hàng là: ${o.totalAmount.toLocaleString('vi-VN')} đ, hiện đã thu: ${(o.paidAmount || 0).toLocaleString('vi-VN')} đ):`, o.paidAmount || 0);
+                if (amount === null) return;
+                const paidVal = parseInt(amount.replace(/\D/g, '') || 0);
+                if (paidVal > o.totalAmount) {
+                  alert('Lỗi: Số tiền thanh toán không được lớn hơn tổng số tiền của đơn hàng!');
+                  return;
+                }
+                try {
+                  await apiFetch(`/api/orders/${o._id}`, {
+                    method: 'PUT',
+                    body: JSON.stringify({
+                      paidAmount: paidVal,
+                      status: (paidVal >= o.totalAmount) ? 'Paid' : 'Unpaid'
+                    })
+                  });
+                  alert('Cập nhật thu tiền thành công!');
+                  fetchData();
+                } catch (e) {
+                  alert('Lỗi cập nhật thanh toán: ' + e.message);
                 }
               }}
               user={user}
