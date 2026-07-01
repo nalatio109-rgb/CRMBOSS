@@ -200,17 +200,49 @@ const getSourceBadge = (source) => {
 
 // --- COMPONENTS ---
 
-const Header = ({ onSearch, unreadCount, searchRef, user, onLogout }) => {
+const Header = ({ onSearch, unreadCount, searchRef, user, onLogout, notifs, onReadNotifs }) => {
   const [open, setOpen] = React.useState(false);
+  const [showNotifs, setShowNotifs] = React.useState(false);
   return (
     <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
       <div style={{ position: 'relative', width: '400px' }}>
         <Search size={18} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
         <input ref={searchRef} type="text" placeholder="Tìm kiếm nhanh... (Alt + S)" onChange={(e) => onSearch(e.target.value)} style={{ width: '100%', padding: '1rem 1rem 1rem 3.5rem', borderRadius: '16px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)', color: 'white', outline: 'none' }} />
       </div>
-      <div className="user-profile" style={{ position: 'relative' }}>
-        <div className="stat-icon" style={{ position: 'relative' }}><Bell size={20} />{unreadCount > 0 && <div style={{ position: 'absolute', top: 0, right: 0, width: 8, height: 8, background: '#ef4444', borderRadius: '50%' }}></div>}</div>
-        <div className="avatar" onClick={() => setOpen(!open)} style={{cursor: 'pointer'}}>{user?.name?.[0] || 'AD'}</div>
+      <div className="user-profile" style={{ position: 'relative', display: 'flex', gap: '15px', alignItems: 'center' }}>
+        
+        <div className="stat-icon" onClick={() => { setShowNotifs(!showNotifs); setOpen(false); if (!showNotifs && unreadCount > 0) onReadNotifs(); }} style={{ position: 'relative', cursor: 'pointer' }}>
+          <Bell size={20} />
+          {unreadCount > 0 && <div style={{ position: 'absolute', top: 0, right: 0, width: 8, height: 8, background: '#ef4444', borderRadius: '50%' }}></div>}
+        </div>
+        
+        {showNotifs && (
+          <div style={{ position: 'absolute', top: '120%', right: '50px', background: '#1e293b', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '10px', minWidth: '320px', zIndex: 50, boxShadow: '0 10px 25px rgba(0,0,0,0.5)', maxHeight: '400px', overflowY: 'auto' }}>
+            <h4 style={{ margin: '0 0 10px 0', borderBottom: '1px solid var(--border-color)', paddingBottom: '10px' }}>Thông báo</h4>
+            {!notifs || notifs.length === 0 ? (
+              <div style={{ padding: '20px', textAlign: 'center', color: '#94a3b8' }}>Chưa có thông báo</div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {notifs.map(n => (
+                  <div key={n._id} style={{ padding: '10px', background: n.isRead ? 'transparent' : 'rgba(99, 102, 241, 0.1)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                    <div style={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '5px', color: n.type === 'birthday' ? '#f59e0b' : n.type === 'success' ? '#10b981' : '#e2e8f0' }}>
+                      {n.title}
+                    </div>
+                    <div style={{ fontSize: '0.85rem', color: '#cbd5e1', margin: '5px 0' }}>{n.message}</div>
+                    {n.type === 'birthday' && n.actionData && n.actionData.phone && (
+                      <a href={`https://zalo.me/${n.actionData.phone.replace(/^0/, '84')}`} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '6px 12px', background: '#2563eb', color: 'white', borderRadius: '6px', fontSize: '0.8rem', textDecoration: 'none', marginTop: '5px' }}>
+                         Chúc mừng qua Zalo
+                      </a>
+                    )}
+                    <div style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '5px' }}>{new Date(n.createdAt).toLocaleString('vi-VN')}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="avatar" onClick={() => { setOpen(!open); setShowNotifs(false); }} style={{cursor: 'pointer'}}>{user?.name?.[0] || 'AD'}</div>
         {open && (
           <div style={{ position: 'absolute', top: '120%', right: 0, background: '#1e293b', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '10px', minWidth: '220px', zIndex: 50, boxShadow: '0 10px 25px rgba(0,0,0,0.5)' }}>
             <div style={{ padding: '10px', borderBottom: '1px solid var(--border-color)' }}>
@@ -1733,7 +1765,7 @@ function App() {
     <div className="app-container">
       <Sidebar activeTab={tab} setActiveTab={setTab} onLogout={()=>{setUser(null);localStorage.removeItem('crm_user');}} user={user} lang={lang} />
       <main className="main-content">
-        <Header onSearch={setSearch} unreadCount={notifs.filter(n=>!n.isRead).length} searchRef={searchRef} user={user} onLogout={()=>{setUser(null);localStorage.removeItem('crm_user');}} />
+        <Header onSearch={setSearch} unreadCount={notifs.filter(n=>!n.isRead).length} searchRef={searchRef} user={user} onLogout={()=>{setUser(null);localStorage.removeItem('crm_user');}} notifs={notifs} onReadNotifs={async () => { await apiFetch('/api/notifications/read-all', { method: 'POST' }); setNotifs(notifs.map(n => ({...n, isRead: true}))); }} />
         <AnimatePresence mode="wait">
           {tab === 'dashboard' && <Dashboard customers={customers} deals={deals} orders={orders} onSelectCustomer={setSelectedCust} lang={lang} user={user} />}
           {tab === 'customers' && user?.role !== 'accountant' && (

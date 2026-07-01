@@ -151,7 +151,36 @@ app.put('/api/users/:id/password', auth, async (req, res) => {
 // --- NOTIFICATIONS ---
 app.get('/api/notifications', auth, async (req, res) => {
   try {
-    const notifs = await Notification.find().sort({ createdAt: -1 }).limit(10);
+    const today = new Date();
+    const month = today.getMonth();
+    const day = today.getDate();
+    const currentYear = today.getFullYear();
+
+    const customers = await Customer.find({ birthday: { $exists: true, $ne: null } });
+    for (const customer of customers) {
+      if (customer.birthday) {
+        const bdate = new Date(customer.birthday);
+        if (bdate.getDate() === day && bdate.getMonth() === month) {
+          const startOfYear = new Date(currentYear, 0, 1);
+          const existingNotif = await Notification.findOne({
+            type: 'birthday',
+            'actionData.customerId': customer._id.toString(),
+            createdAt: { $gte: startOfYear }
+          });
+          
+          if (!existingNotif) {
+            await new Notification({
+              title: 'Sinh nhật khách hàng',
+              message: `Hôm nay là sinh nhật của khách hàng ${customer.name}.`,
+              type: 'birthday',
+              actionData: { customerId: customer._id.toString(), phone: customer.phone }
+            }).save();
+          }
+        }
+      }
+    }
+
+    const notifs = await Notification.find().sort({ createdAt: -1 }).limit(20);
     res.json(notifs);
   } catch (err) { res.status(500).json({ message: err.message }); }
 });
