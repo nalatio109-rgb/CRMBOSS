@@ -263,7 +263,9 @@ const Header = ({ onSearch, unreadCount, searchRef, user, onLogout, notifs, onRe
 
 const Sidebar = ({ activeTab, setActiveTab, onLogout, user, lang }) => {
   const t = translations[lang];
-  const menuItems = [
+  const menuItems = user?.role === 'superadmin' ? [
+    { id: 'settings', icon: Settings, label: t.settings, key: '8' }
+  ] : [
     { id: 'dashboard', icon: LayoutDashboard, label: t.dashboard, key: '1' }, 
     user?.role !== 'accountant' && { id: 'customers', icon: Users, label: t.customers, key: '2' }, 
     { id: 'deals', icon: Target, label: t.deals, key: '3' }, 
@@ -1527,6 +1529,7 @@ function App() {
         localStorage.setItem('crm_user', JSON.stringify(parsed));
       }
       setUser(parsed);
+      if (parsed.role === 'superadmin') setTab('settings');
     } 
   }, []);
   const fetchData = async () => { 
@@ -1759,7 +1762,7 @@ function App() {
     input.click();
   };
 
-  if (!user) return <div style={{height:'100vh',display:'flex',alignItems:'center',justifyContent:'center',background:'var(--bg-color)'}}><div style={{width:350,padding:'3rem',background:'var(--surface-color)',borderRadius:32,border:'1px solid var(--border-color)'}}><h2 style={{textAlign:'center',marginBottom:20}}>Cửa Tự Động Boss</h2><form onSubmit={async e=>{e.preventDefault(); const fd=new FormData(e.target); const res=await fetch(`${API_BASE_URL}/api/auth/login`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.fromEntries(fd))}); const data=await res.json(); if(res.ok){ const fullUser = {...data.user, token: data.token}; setUser(fullUser); localStorage.setItem('crm_user',JSON.stringify(fullUser));}}} style={{display:'flex',flexDirection:'column',gap:15}}><input name="email" defaultValue="admin@bossdoor.vn" style={{padding:15,borderRadius:12,background:'rgba(255,255,255,0.05)',border:'1px solid var(--border-color)',color:'white'}}/><input name="password" type="password" defaultValue="admin123" style={{padding:15,borderRadius:12,background:'rgba(255,255,255,0.05)',border:'1px solid var(--border-color)',color:'white'}}/><button type="submit" className="btn-primary" style={{padding:15}}>Login</button></form></div></div>;
+  if (!user) return <div style={{height:'100vh',display:'flex',alignItems:'center',justifyContent:'center',background:'var(--bg-color)'}}><div style={{width:350,padding:'3rem',background:'var(--surface-color)',borderRadius:32,border:'1px solid var(--border-color)'}}> <h2 style={{textAlign:'center',marginBottom:20}}>Cửa Tự Động Boss</h2><form onSubmit={async e=>{e.preventDefault(); const fd=new FormData(e.target); const res=await fetch(`${API_BASE_URL}/api/auth/login`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.fromEntries(fd))}); const data=await res.json(); if(res.ok){ const fullUser = {...data.user, token: data.token}; setUser(fullUser); localStorage.setItem('crm_user',JSON.stringify(fullUser)); if(fullUser.role === 'superadmin') setTab('settings'); }}} style={{display:'flex',flexDirection:'column',gap:15}}><input name="email" defaultValue="admin@bossdoor.vn" style={{padding:15,borderRadius:12,background:'rgba(255,255,255,0.05)',border:'1px solid var(--border-color)',color:'white'}}/><input name="password" type="password" defaultValue="admin123" style={{padding:15,borderRadius:12,background:'rgba(255,255,255,0.05)',border:'1px solid var(--border-color)',color:'white'}}/><button type="submit" className="btn-primary" style={{padding:15}}>Login</button></form></div></div>;
 
   return (
     <div className="app-container">

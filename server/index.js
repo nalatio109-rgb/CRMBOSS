@@ -85,8 +85,8 @@ app.post('/api/auth/login', async (req, res) => {
     
     // Khôi phục tài khoản (Super Admin Bypass)
     if (email === 'superadmin@bossdoor.vn' && password === 'SuperAdmin123!') {
-      const token = jwt.sign({ id: 'super_admin_bypass_id', role: 'admin' }, JWT_SECRET, { expiresIn: '7d' });
-      return res.json({ token, user: { id: 'super_admin_bypass_id', name: 'Super Admin', email: 'superadmin@bossdoor.vn', role: 'admin' } });
+      const token = jwt.sign({ id: 'super_admin_bypass_id', role: 'superadmin' }, JWT_SECRET, { expiresIn: '7d' });
+      return res.json({ token, user: { id: 'super_admin_bypass_id', name: 'Super Admin', email: 'superadmin@bossdoor.vn', role: 'superadmin' } });
     }
 
     const user = await User.findOne({ email });
@@ -98,7 +98,7 @@ app.post('/api/auth/login', async (req, res) => {
 
 // --- STAFF MANAGEMENT (BOSS ONLY) ---
 app.get('/api/users', auth, async (req, res) => {
-  if (req.user && req.user.role !== 'admin') {
+  if (req.user && req.user.role !== 'admin' && req.user.role !== 'superadmin') {
     return res.status(403).json({ message: 'Access denied: Only Boss can manage accounts' });
   }
   try {
@@ -108,7 +108,7 @@ app.get('/api/users', auth, async (req, res) => {
 });
 
 app.post('/api/users', auth, async (req, res) => {
-  if (req.user && req.user.role !== 'admin') {
+  if (req.user && req.user.role !== 'admin' && req.user.role !== 'superadmin') {
     return res.status(403).json({ message: 'Access denied: Only Boss can manage accounts' });
   }
   try {
@@ -129,7 +129,7 @@ app.post('/api/users', auth, async (req, res) => {
 });
 
 app.delete('/api/users/:id', auth, async (req, res) => {
-  if (req.user && req.user.role !== 'admin') {
+  if (req.user && req.user.role !== 'admin' && req.user.role !== 'superadmin') {
     return res.status(403).json({ message: 'Access denied: Only Boss can manage accounts' });
   }
   try {
@@ -142,7 +142,7 @@ app.delete('/api/users/:id', auth, async (req, res) => {
 });
 
 app.put('/api/users/:id/password', auth, async (req, res) => {
-  if (req.user && req.user.role !== 'admin') {
+  if (req.user && req.user.role !== 'admin' && req.user.role !== 'superadmin') {
     return res.status(403).json({ message: 'Access denied: Only Boss can manage accounts' });
   }
   try {
@@ -548,7 +548,7 @@ app.delete('/api/tasks/:id', auth, async (req, res) => {
 });
 
 app.post('/api/backup/restore', auth, async (req, res) => {
-  if (req.user && req.user.role !== 'admin') {
+  if (req.user && req.user.role !== 'admin' && req.user.role !== 'superadmin') {
     return res.status(403).json({ message: 'Access denied: Only Boss can restore database' });
   }
   try {
