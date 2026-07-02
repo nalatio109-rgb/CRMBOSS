@@ -1064,7 +1064,7 @@ const SettingsView = ({ user, lang, setLang, onBackup, onRestore, apiFetch }) =>
               <button onClick={onBackup} className="btn-primary" style={{background:'rgba(255,255,255,0.05)',border:'1px solid var(--border-color)',color:'white'}}>
                 <CloudDownload size={18} style={{marginRight:8}}/> Sao lưu
               </button>
-              {user?.role === 'admin' && (
+              {(user?.role === 'admin' || user?.role === 'superadmin') && (
                 <button onClick={onRestore} className="btn-primary" style={{background:'rgba(99,102,241,0.1)',border:'1px solid #6366f1',color:'#a5b4fc'}}>
                   <CloudDownload size={18} style={{marginRight:8, transform: 'rotate(180deg)'}}/> Khôi phục
                 </button>
@@ -1073,7 +1073,7 @@ const SettingsView = ({ user, lang, setLang, onBackup, onRestore, apiFetch }) =>
           </div>
         </div>
 
-        {user?.role === 'admin' && (
+        {(user?.role === 'admin' || user?.role === 'superadmin') && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '1.5rem', marginTop: '1rem' }}>
             {/* Tạo tài khoản mới */}
             <div className="section-card">
