@@ -1061,13 +1061,15 @@ const SettingsView = ({ user, lang, setLang, onBackup, onRestore, apiFetch }) =>
             <h3>Dữ liệu</h3>
             <p style={{fontSize:'0.8rem',color:'var(--text-secondary)',marginBottom:15}}>Xuất/Nhập dữ liệu bằng file JSON để sao lưu và khôi phục.</p>
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-              <button onClick={onBackup} className="btn-primary" style={{background:'rgba(255,255,255,0.05)',border:'1px solid var(--border-color)',color:'white'}}>
-                <CloudDownload size={18} style={{marginRight:8}}/> Sao lưu
-              </button>
-              {(user?.role === 'admin' || user?.role === 'superadmin') && (
-                <button onClick={onRestore} className="btn-primary" style={{background:'rgba(99,102,241,0.1)',border:'1px solid #6366f1',color:'#a5b4fc'}}>
-                  <CloudDownload size={18} style={{marginRight:8, transform: 'rotate(180deg)'}}/> Khôi phục
-                </button>
+              {user?.role === 'admin' && (
+                <>
+                  <button onClick={onBackup} className="btn-primary" style={{background:'rgba(255,255,255,0.05)',border:'1px solid var(--border-color)',color:'white'}}>
+                    <CloudDownload size={18} style={{marginRight:8}}/> Sao lưu
+                  </button>
+                  <button onClick={onRestore} className="btn-primary" style={{background:'rgba(99,102,241,0.1)',border:'1px solid #6366f1',color:'#a5b4fc'}}>
+                    <CloudDownload size={18} style={{marginRight:8, transform: 'rotate(180deg)'}}/> Khôi phục
+                  </button>
+                </>
               )}
             </div>
           </div>
@@ -1076,47 +1078,49 @@ const SettingsView = ({ user, lang, setLang, onBackup, onRestore, apiFetch }) =>
         {(user?.role === 'admin' || user?.role === 'superadmin') && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '1.5rem', marginTop: '1rem' }}>
             {/* Tạo tài khoản mới */}
-            <div className="section-card">
-              <h3>Tạo tài khoản Nhân viên mới</h3>
-              <form onSubmit={handleCreateUser} style={{ display: 'flex', flexDirection: 'column', gap: 15, marginTop: 15 }}>
-                <input 
-                  type="text" 
-                  placeholder="Tên nhân viên" 
-                  value={name} 
-                  onChange={(e) => setName(e.target.value)} 
-                  required 
-                  style={{ padding: 12, borderRadius: 12, background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)', color: 'white' }}
-                />
-                <input 
-                  type="email" 
-                  placeholder="Email đăng nhập" 
-                  value={email} 
-                  onChange={(e) => setEmail(e.target.value)} 
-                  required 
-                  style={{ padding: 12, borderRadius: 12, background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)', color: 'white' }}
-                />
-                <input 
-                  type="password" 
-                  placeholder="Mật khẩu" 
-                  value={password} 
-                  onChange={(e) => setPassword(e.target.value)} 
-                  required 
-                  style={{ padding: 12, borderRadius: 12, background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)', color: 'white' }}
-                />
-                <select 
-                  value={role} 
-                  onChange={(e) => setRole(e.target.value)}
-                  style={{ padding: 12, borderRadius: 12, background: '#0f172a', border: '1px solid var(--border-color)', color: 'white' }}
-                >
-                  <option value="staff" style={{ color: 'white', background: '#0f172a' }}>Quyền: Nhân viên (staff)</option>
-                  <option value="accountant" style={{ color: 'white', background: '#0f172a' }}>Quyền: Kế toán (accountant)</option>
-                  <option value="admin" style={{ color: 'white', background: '#0f172a' }}>Quyền: Boss / Admin (admin)</option>
-                </select>
-                {error && <div style={{ color: '#ef4444', fontSize: '0.8rem' }}>{error}</div>}
-                {success && <div style={{ color: '#10b981', fontSize: '0.8rem' }}>{success}</div>}
-                <button type="submit" className="btn-primary" style={{ padding: 12 }}>Tạo tài khoản</button>
-              </form>
-            </div>
+            {user?.role === 'admin' && (
+              <div className="section-card">
+                <h3>Tạo tài khoản Nhân viên mới</h3>
+                <form onSubmit={handleCreateUser} style={{ display: 'flex', flexDirection: 'column', gap: 15, marginTop: 15 }}>
+                  <input 
+                    type="text" 
+                    placeholder="Tên nhân viên" 
+                    value={name} 
+                    onChange={(e) => setName(e.target.value)} 
+                    required 
+                    style={{ padding: 12, borderRadius: 12, background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)', color: 'white' }}
+                  />
+                  <input 
+                    type="email" 
+                    placeholder="Email đăng nhập" 
+                    value={email} 
+                    onChange={(e) => setEmail(e.target.value)} 
+                    required 
+                    style={{ padding: 12, borderRadius: 12, background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)', color: 'white' }}
+                  />
+                  <input 
+                    type="password" 
+                    placeholder="Mật khẩu" 
+                    value={password} 
+                    onChange={(e) => setPassword(e.target.value)} 
+                    required 
+                    style={{ padding: 12, borderRadius: 12, background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)', color: 'white' }}
+                  />
+                  <select 
+                    value={role} 
+                    onChange={(e) => setRole(e.target.value)}
+                    style={{ padding: 12, borderRadius: 12, background: '#0f172a', border: '1px solid var(--border-color)', color: 'white' }}
+                  >
+                    <option value="staff" style={{ color: 'white', background: '#0f172a' }}>Quyền: Nhân viên (staff)</option>
+                    <option value="accountant" style={{ color: 'white', background: '#0f172a' }}>Quyền: Kế toán (accountant)</option>
+                    <option value="admin" style={{ color: 'white', background: '#0f172a' }}>Quyền: Boss / Admin (admin)</option>
+                  </select>
+                  {error && <div style={{ color: '#ef4444', fontSize: '0.8rem' }}>{error}</div>}
+                  {success && <div style={{ color: '#10b981', fontSize: '0.8rem' }}>{success}</div>}
+                  <button type="submit" className="btn-primary" style={{ padding: 12 }}>Tạo tài khoản</button>
+                </form>
+              </div>
+            )}
 
             {/* Danh sách tài khoản */}
             <div className="section-card" style={{ display: 'flex', flexDirection: 'column' }}>
@@ -1128,7 +1132,7 @@ const SettingsView = ({ user, lang, setLang, onBackup, onRestore, apiFetch }) =>
                       <th>Tên</th>
                       <th>Email</th>
                       <th>Quyền</th>
-                      <th>Hành động</th>
+                      <th style={{ textAlign: 'center' }}>Hành động</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1149,15 +1153,17 @@ const SettingsView = ({ user, lang, setLang, onBackup, onRestore, apiFetch }) =>
                             >
                               Đổi MK
                             </button>
-                            {u._id !== user.id ? (
-                              <button 
-                                onClick={() => handleDeleteUser(u._id)}
-                                style={{ background: 'rgba(239,68,68,0.2)', border: 'none', color: '#ef4444', padding: '4px 8px', borderRadius: 6, cursor: 'pointer', fontSize: '0.75rem' }}
-                              >
-                                Xóa
-                              </button>
-                            ) : (
-                              <span style={{ fontSize: '0.75rem', opacity: 0.4 }}>Đang dùng</span>
+                            {user?.role === 'admin' && (
+                              u._id !== user.id ? (
+                                <button 
+                                  onClick={() => handleDeleteUser(u._id)}
+                                  style={{ background: 'rgba(239,68,68,0.2)', border: 'none', color: '#ef4444', padding: '4px 8px', borderRadius: 6, cursor: 'pointer', fontSize: '0.75rem' }}
+                                >
+                                  Xóa
+                                </button>
+                              ) : (
+                                <span style={{ fontSize: '0.75rem', opacity: 0.4 }}>Đang dùng</span>
+                              )
                             )}
                           </div>
                         </td>

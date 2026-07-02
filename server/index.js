@@ -108,7 +108,7 @@ app.get('/api/users', auth, async (req, res) => {
 });
 
 app.post('/api/users', auth, async (req, res) => {
-  if (req.user && req.user.role !== 'admin' && req.user.role !== 'superadmin') {
+  if (req.user && req.user.role !== 'admin') {
     return res.status(403).json({ message: 'Access denied: Only Boss can manage accounts' });
   }
   try {
@@ -129,7 +129,7 @@ app.post('/api/users', auth, async (req, res) => {
 });
 
 app.delete('/api/users/:id', auth, async (req, res) => {
-  if (req.user && req.user.role !== 'admin' && req.user.role !== 'superadmin') {
+  if (req.user && req.user.role !== 'admin') {
     return res.status(403).json({ message: 'Access denied: Only Boss can manage accounts' });
   }
   try {
@@ -548,7 +548,7 @@ app.delete('/api/tasks/:id', auth, async (req, res) => {
 });
 
 app.post('/api/backup/restore', auth, async (req, res) => {
-  if (req.user && req.user.role !== 'admin' && req.user.role !== 'superadmin') {
+  if (req.user && req.user.role !== 'admin') {
     return res.status(403).json({ message: 'Access denied: Only Boss can restore database' });
   }
   try {
