@@ -992,7 +992,7 @@ const SettingsView = ({ user, lang, setLang, onBackup, onRestore, apiFetch }) =>
   };
 
   useEffect(() => {
-    if (user?.role === 'admin') {
+    if (user?.role === 'admin' || user?.role === 'superadmin') {
       fetchUsers();
     }
   }, [user]);
